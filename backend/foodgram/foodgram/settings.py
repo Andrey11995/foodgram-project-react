@@ -124,9 +124,3 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
-
-DJOSER = {
-    # 'SERIALIZERS': {
-    #     "user_create": "accounts.serializers.UserCreateSerializer",
-    # },
-}

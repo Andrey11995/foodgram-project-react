@@ -1,4 +1,3 @@
-# from djoser.views import UserViewSet
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import mixins, permissions, response, status, viewsets
 from rest_framework.decorators import action
