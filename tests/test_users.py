@@ -40,7 +40,7 @@ class TestUsers:
                 f'`fields` сериализатора модели User'
             )
             assert field[1] == test_user[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}`: `{field[1]}`'
+                f'Убедитесь, что значение поля `{field[0]}` верно'
             )
 
     @pytest.mark.django_db(transaction=True)
@@ -151,7 +151,7 @@ class TestUsers:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_users_create__valid_request_data(self, client):
+    def test_users_create__valid_request_data(self, client, user):
         users_count = User.objects.count()
         code_expected = 201
         valid_data = {
@@ -165,7 +165,7 @@ class TestUsers:
         response_data = response.json()
         data_expected = {
             'email': 'Valid@Email.ru',
-            'id': 8,
+            'id': response_data['id'],
             'username': 'ValidUsername',
             'first_name': 'Validname',
             'last_name': 'Validlastname'

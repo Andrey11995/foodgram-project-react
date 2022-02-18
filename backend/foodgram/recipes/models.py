@@ -3,23 +3,12 @@ from django.db import models
 
 from users.models import User
 
-UNITS = (
-    ('piece', 'шт.'),
-    ('liters', 'л.'),
-    ('milliliters', 'мл.'),
-    ('kilogram', 'кг.'),
-    ('gram', 'г.'),
-    ('tablespoon', 'ст.л.'),
-    ('teaspoon', 'ч.л.'),
-)
-
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
-    amount = models.FloatField(verbose_name='Количество')
-    units = models.CharField(
-        max_length=max(len(unit[0]) for unit in UNITS),
-        choices=UNITS,
+    name = models.CharField(max_length=250, verbose_name='Название')
+    amount = models.FloatField(verbose_name='Количество', null=True)
+    measurement_unit = models.CharField(
+        max_length=50,
         verbose_name='Единица измерения'
     )
 

@@ -49,6 +49,8 @@ class UserViewSet(CreateRetrieveListViewSet):
     def set_password(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.request.user.set_password(serializer.data["new_password"])
+        self.request.user.set_password(
+            serializer.validated_data.get('new_password')
+        )
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
