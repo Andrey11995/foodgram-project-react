@@ -1,6 +1,6 @@
 import re
-from django.contrib.auth.password_validation import get_default_password_validators
-from django.contrib.auth.validators import UnicodeUsernameValidator
+
+from django.contrib.auth import password_validation as pass_val
 from rest_framework import serializers
 
 from .models import User
@@ -56,7 +56,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return last_name
 
     def validate_password(self, password):
-        password_validators = get_default_password_validators()
+        password_validators = pass_val.get_default_password_validators()
         errors = []
         for validator in password_validators:
             try:
