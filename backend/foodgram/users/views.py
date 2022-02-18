@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import User
+from .permissions import IsAuthOrCreateList
 from .serializers import UserCreateSerializer, UserSerializer
 
 
@@ -17,7 +18,7 @@ class CreateRetrieveListViewSet(mixins.CreateModelMixin,
 class UserViewSet(CreateRetrieveListViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthOrCreateList]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -40,7 +41,11 @@ class UserViewSet(CreateRetrieveListViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(['POST'], detail=False)
+    @action(
+        detail=False,
+        methods=['POST'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
     def set_password(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

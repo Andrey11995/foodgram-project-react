@@ -64,7 +64,7 @@ class TestToken:
         url = self.url_login
         valid_data = {
             'email': user.email,
-            'password': '1234567'
+            'password': 'Password654321'
         }
         response = client.post(url, data=valid_data)
 

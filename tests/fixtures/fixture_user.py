@@ -9,7 +9,7 @@ def user(django_user_model):
         username='TestUser',
         first_name='TestName',
         last_name='TestLastName',
-        password='1234567'
+        password='Password654321'
     )
 
 
@@ -20,7 +20,51 @@ def user_2(django_user_model):
         username='TestUser2',
         first_name='TestName2',
         last_name='TestLastName2',
-        password='1234567'
+        password='Password654321'
+    )
+
+
+@pytest.fixture
+def user_3(django_user_model):
+    return django_user_model.objects.create_user(
+        email='TestEmail3@mail.ru',
+        username='TestUser3',
+        first_name='TestName3',
+        last_name='TestLastName3',
+        password='Password654321'
+    )
+
+
+@pytest.fixture
+def user_4(django_user_model):
+    return django_user_model.objects.create_user(
+        email='TestEmail4@mail.ru',
+        username='TestUser4',
+        first_name='TestName4',
+        last_name='TestLastName4',
+        password='Password654321'
+    )
+
+
+@pytest.fixture
+def user_5(django_user_model):
+    return django_user_model.objects.create_user(
+        email='TestEmail5@mail.ru',
+        username='TestUser5',
+        first_name='TestName5',
+        last_name='TestLastName5',
+        password='Password654321'
+    )
+
+
+@pytest.fixture
+def user_6(django_user_model):
+    return django_user_model.objects.create_user(
+        email='TestEmail6@mail.ru',
+        username='TestUser6',
+        first_name='TestName6',
+        last_name='TestLastName6',
+        password='Password654321'
     )
 
 
@@ -31,7 +75,7 @@ def another_user(django_user_model):
         username='TestAnotherUser',
         first_name='TestAnotherName2',
         last_name='TestAnotherLastName2',
-        password='1234567'
+        password='Password654321'
     )
 
 

@@ -6,7 +6,6 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=150,
         unique=True,
-        db_index=True,
         verbose_name='Логин'
     )
     email = models.EmailField(
@@ -16,12 +15,10 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         max_length=150,
-        null=True,
         verbose_name='Имя'
     )
     last_name = models.CharField(
         max_length=150,
-        null=True,
         verbose_name='Фамилия'
     )
     is_subscribed = models.BooleanField('Подписка', default=False)
