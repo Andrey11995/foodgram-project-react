@@ -1,20 +1,30 @@
 import pytest
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Amount, Ingredient, Recipe, Tag
 
 
 @pytest.fixture
 def ingredient():
     return Ingredient.objects.create(
-        name='Ингредиент', amount=2.5, measurement_unit='кг'
+        name='Ингредиент', measurement_unit='кг'
     )
 
 
 @pytest.fixture
 def ingredient_2():
     return Ingredient.objects.create(
-        name='Ингредиент 2', amount=1, measurement_unit='л'
+        name='Ингредиент 2', measurement_unit='л'
     )
+
+
+@pytest.fixture
+def amount(ingredient):
+    return Amount.objects.create(id=ingredient, amount=2.5)
+
+
+@pytest.fixture
+def amount_2(ingredient_2):
+    return Amount.objects.create(id=ingredient_2, amount=1)
 
 
 @pytest.fixture

@@ -1,21 +1,26 @@
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Amount, Ingredient, Recipe, Tag
 from users.serializers import UserSerializer
 
 
-class IngredientsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
-
-
-class IngredientsCreateSerializer(serializers.ModelSerializer):
+class IngredientsListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
         fields = '__all__'
+
+
+class IngredientsSerializer(serializers.ModelSerializer):
+    amount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+
+    def get_amount(self, obj):
+        amount_object = Amount.objects.get(id=obj.id)
+        return amount_object.amount
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -26,8 +31,8 @@ class TagsSerializer(serializers.ModelSerializer):
 
 
 class RecipesSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    ingredients = IngredientsCreateSerializer(many=True)
+    author = UserSerializer(read_only=True) ###
+    ingredients = IngredientsSerializer(many=True)
     tags = TagsSerializer(many=True)
 
     class Meta:
@@ -38,13 +43,24 @@ class RecipesSerializer(serializers.ModelSerializer):
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
-    ingredients = IngredientsSerializer(many=True)
-    tags = TagsSerializer(many=True)
+    author = UserSerializer(read_only=True) ###
+    # ingredients = serializers.RelatedField(
+    #     queryset=Amount.objects.all(),
+    #     many=True,
+    #     required=True
+    # )
+    tags = serializers.RelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        required=True
+    )
 
     class Meta:
         model = Recipe
-        fields = ('ingredients', 'tags', 'image', 'name', 'text',
+        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
+                  'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
+        read_only_fields = ('is_favorited', 'is_in_shopping_cart')
 
     def validate_name(self, name):
         if not name.istitle():

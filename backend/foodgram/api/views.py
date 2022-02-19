@@ -3,7 +3,7 @@ from rest_framework import mixins, permissions, viewsets
 from recipes.models import Ingredient, Recipe, Tag
 
 from .permissions import IsAuthOwnerOrReadOnly
-from .serializers import (IngredientsSerializer, RecipesCreateSerializer,
+from .serializers import (IngredientsListSerializer, RecipesCreateSerializer,
                           RecipesSerializer, TagsSerializer)
 
 
@@ -15,7 +15,7 @@ class RetrieveListViewSet(mixins.ListModelMixin,
 
 class IngredientsViewSet(RetrieveListViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientsSerializer
+    serializer_class = IngredientsListSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
 

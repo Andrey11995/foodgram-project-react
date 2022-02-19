@@ -5,8 +5,7 @@ from users.models import User
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=250, verbose_name='Название')
-    amount = models.FloatField(verbose_name='Количество', null=True)
+    name = models.CharField(max_length=200, verbose_name='Название')
     measurement_unit = models.CharField(
         max_length=50,
         verbose_name='Единица измерения'
@@ -19,6 +18,20 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+
+class Amount(models.Model):
+    id = models.OneToOneField(
+        Ingredient,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='ingredients'
+    )
+    amount = models.FloatField('Количество')
+
+    class Meta:
+        verbose_name = 'Количество'
+        verbose_name_plural = 'Количество'
 
 
 class Tag(models.Model):

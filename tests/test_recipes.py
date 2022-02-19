@@ -17,7 +17,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_list(self, client, user_client, another_user, recipe,
-                          recipe_2, tag, tag_2, ingredient, ingredient_2):
+                          recipe_2, tag, tag_2, ingredient, ingredient_2, amount, amount_2):
         code_expected = 200
         response = client.get(self.url)
         response_auth = user_client.get(self.url)
@@ -52,13 +52,13 @@ class TestUsers:
             {
                 'id': ingredient.id,
                 'name': ingredient.name,
-                'amount': ingredient.amount,
+                'amount': 2.5,
                 'measurement_unit': ingredient.measurement_unit
             },
             {
                 'id': ingredient_2.id,
                 'name': ingredient_2.name,
-                'amount': ingredient_2.amount,
+                'amount': 1,
                 'measurement_unit': ingredient_2.measurement_unit
             }
         ]
