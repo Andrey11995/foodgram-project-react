@@ -1,10 +1,19 @@
 import pytest
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from recipes.models import Recipe
 
 
 class TestUsers:
     url = '/api/recipes/'
+    small_gif = (
+        b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
+        b'\x01\x0a\x00\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
+        b'\x02\x4c\x01\x00\x3b'
+    )
+    test_image = SimpleUploadedFile('small.gif', small_gif,
+                                    content_type='image/gif')
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_list(self, client, user_client, another_user, recipe,
@@ -201,6 +210,180 @@ class TestUsers:
             assert field[0] in response_data.keys(), (
                 f'Проверьте, что добавили поле `{field[0]}` в список полей '
                 f'`fields` сериализатора модели Recipe'
+            )
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что значение поля `{field[0]}` содержит '
+                f'корректные данные'
+            )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__not_auth(self, client, tag, ingredient):
+        recipes_count = Recipe.objects.count()
+        code_expected = 401
+        ingredients_data = [
+            {
+                'id': ingredient.id,
+                'amount': 2.5
+            }
+        ]
+        data = {
+            'ingredients': ingredients_data,
+            'tags': [tag.id],
+            'image': self.test_image,
+            'name': 'Рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 1
+        }
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+        response = client.post(self.url, data=data)
+        response_data = response.json()
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` '
+            f'от неавторизованного пользователя, возвращается статус '
+            f'{code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count, (
+            f'Проверьте, что при POST запросе на `{self.url}` '
+            f'от неавторизованного пользователя, не создается новый рецепт'
+        )
+        assert response_data == data_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` '
+            f'от неавторизованного пользователя, возвращается сообщение: '
+            f'{data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__empty_request_data(self, user_client):
+        recipes_count = Recipe.objects.count()
+        code_expected = 400
+        empty_data = {}
+        response = user_client.post(self.url, data=empty_data)
+        response_data = response.json()
+        required_field = ['Обязательное поле.']
+        data_expected = {
+            'ingredients': required_field,
+            'tags': required_field,
+            'image': ['Ни одного файла не было отправлено.'],
+            'name': required_field,
+            'text': required_field,
+            'cooking_time': required_field
+        }
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` без данных '
+            f'возвращается статус {code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count, (
+            f'Проверьте, что при POST запросе на `{self.url}` без данных '
+            f'не создается новый рецепт'
+        )
+        for field in data_expected.items():
+            assert field[0] in response_data.keys(), (
+                f'Проверьте, что поле `{field[0]}` является обязательным'
+            )
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что значение поля `{field[0]}` после POST '
+                f'запроса без данных: `{field[1]}`'
+            )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__invalid_request_data(self, user_client):
+        recipes_count = Recipe.objects.count()
+        code_expected = 400
+        invalid_ingredients_data = [
+            {
+                'id': 404,
+                'amount': 0
+            }
+        ]
+        invalid_data = {
+            'ingredients': invalid_ingredients_data,
+            'tags': [404],
+            'image': 'invalid_link',
+            'name': 'рецепт',
+            'text': 'описание',
+            'cooking_time': 0
+        }
+        response = user_client.post(self.url, data=invalid_data)
+        response_data = response.json()
+        data_expected = {
+            'ingredients': ['Обязательное поле.'],
+            'tags': ['Обязательное поле.'],
+            'image': ['Загруженный файл не является корректным файлом.'],
+            'name': ['Название должно начинаться с заглавной буквы!'],
+            'text': ['Описание должно содержать от 10 символов!'],
+            'cooking_time': ['Убедитесь, что это значение больше либо '
+                             'равно 1.']
+        }
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
+            f'данными, возвращается статус {code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count, (
+            f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
+            f'данными не создается новый рецепт'
+        )
+        for field in data_expected.items():
+            assert field[0] in response_data.keys(), (
+                f'Убедитесь, что поле `{field[0]}` проверяется на валидность'
+            )
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что поле `{field[0]}` после POST запроса '
+                f'с невалидными данными выдает соответствующую ошибку'
+            )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__valid_request_data(self, user_client, another_user, tag, tag_2, ingredient, ingredient_2):
+        recipes_count = Recipe.objects.count()
+        code_expected = 201
+        valid_ingredients_data = [
+            {
+                'id': ingredient.id,
+                'amount': 2.5
+            },
+            {
+                'id': ingredient_2.id,
+                'amount': 10
+            }
+        ]
+        valid_data = {
+            'ingredients': valid_ingredients_data,
+            'tags': [tag.id, tag_2.id],
+            'image': self.test_image,
+            'name': 'Рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+        response = user_client.post(self.url, data=valid_data)
+        response_data = response.json()
+        print(response_data)
+        data_expected = {
+            'id': 1,
+            'tags': [tag.id, tag_2.id],
+            'author': '',
+            'ingredients': valid_ingredients_data,
+            'is_favorited': False,
+            'is_in_shopping_cart': False,
+            'name': 'Рецепт',
+            'image': 'test_image.jpg',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` с валидными '
+            f'данными, возвращается статус {code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count + 1, (
+            f'Проверьте, что при POST запросе на `{self.url}` с валидными '
+            f'данными создается новый рецепт'
+        )
+        for field in data_expected.items():
+            assert field[0] in response_data.keys(), (
+                f'Убедитесь, что поле `{field[0]}` присутствует в выдаче '
+                f'после успешного создания пользователя'
             )
             assert field[1] == response_data[field[0]], (
                 f'Убедитесь, что значение поля `{field[0]}` содержит '

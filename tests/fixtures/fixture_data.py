@@ -58,7 +58,7 @@ def recipe_2(user, ingredient, tag):
         image=image,
         name='Тестовый рецепт 2',
         text='Описание тестового рецепта 2',
-        cooking_time=10
+        cooking_time=300
     )
     recipe.ingredients.set(ingredients)
     recipe.tags.set(tags)
