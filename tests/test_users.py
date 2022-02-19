@@ -48,7 +48,8 @@ class TestUsers:
                 f'`fields` сериализатора модели User'
             )
             assert field[1] == test_user[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}` верно'
+                f'Убедитесь, что значение поля `{field[0]}` содержит '
+                f'корректные данные'
             )
 
     @pytest.mark.django_db(transaction=True)

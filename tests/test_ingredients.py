@@ -40,7 +40,8 @@ class TestIngredients:
                 f'`fields` сериализатора модели Ingredient'
             )
             assert field[1] == test_ingredient[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}` верно'
+                f'Убедитесь, что значение поля `{field[0]}` содержит '
+                f'корректные данные'
             )
 
     @pytest.mark.django_db(transaction=True)
@@ -72,5 +73,6 @@ class TestIngredients:
                 f'`fields` сериализатора модели Ingredient'
             )
             assert field[1] == response_data[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}` верно'
+                f'Убедитесь, что значение поля `{field[0]}` содержит '
+                f'корректные данные'
             )

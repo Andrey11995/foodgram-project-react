@@ -1,5 +1,4 @@
 import pytest
-import tempfile
 
 from recipes.models import Ingredient, Recipe, Tag
 
@@ -34,7 +33,7 @@ def tag_2():
 
 @pytest.fixture
 def recipe(another_user, ingredient, ingredient_2, tag, tag_2):
-    image = tempfile.NamedTemporaryFile(suffix=".jpg").name
+    image = 'https://site.test/image.jpg'
     ingredients = [ingredient, ingredient_2]
     tags = [tag, tag_2]
     recipe = Recipe.objects.create(
@@ -51,7 +50,7 @@ def recipe(another_user, ingredient, ingredient_2, tag, tag_2):
 
 @pytest.fixture
 def recipe_2(user, ingredient, tag):
-    image = tempfile.NamedTemporaryFile(suffix=".jpg").name
+    image = 'https://site.test/image2.jpg'
     ingredients = [ingredient]
     tags = [tag]
     recipe = Recipe.objects.create(

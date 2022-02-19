@@ -57,12 +57,12 @@ class TestUsers:
         data_expected = {
             'id': recipe.id,
             'tags': tags_data,
-            'author': recipe.author,
-            'ingredients': recipe.ingredients,
+            'author': author_data,
+            'ingredients': ingredients_data,
             'is_favorited': recipe.is_favorited,
             'is_in_shopping_cart': recipe.is_in_shopping_cart,
             'name': recipe.name,
-            'image': recipe.image,
+            'image': 'http://testserver/media/https%3A/site.test/image.jpg',
             'text': recipe.text,
             'cooking_time': recipe.cooking_time
         }
@@ -84,11 +84,22 @@ class TestUsers:
             f'Проверьте, что при GET запросе на `{self.url}` '
             f'возвращается весь список пользователей'
         )
+        for field in tags_data.items():
+            assert field[0] in test_recipe['tags'][0].keys(), (
+                f'Проверьте, что добавили поле `{field[0]}` в список полей '
+                f'`fields` сериализатора модели Tags, связанного '
+                f'с сериализатором модели Recipes'
+            )
+            assert field[1] == test_recipe['tags'][0][field[0]], (
+                f'Убедитесь, что значение поля `{field[0]}` в поле '
+                f'`tags` содержит корректные данные'
+            )
         for field in data_expected.items():
             assert field[0] in test_recipe.keys(), (
                 f'Проверьте, что добавили поле `{field[0]}` в список полей '
-                f'`fields` сериализатора модели User'
+                f'`fields` сериализатора модели Recipe'
             )
             assert field[1] == test_recipe[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}` верно'
+                f'Убедитесь, что значение поля `{field[0]}` содержит '
+                f'корректные данные'
             )
