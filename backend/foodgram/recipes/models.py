@@ -27,7 +27,7 @@ class Tag(models.Model):
         unique=True,
         verbose_name='Название'
     )
-    hex_code = models.CharField(
+    color = models.CharField(
         unique=True,
         max_length=50,
         verbose_name='Цветовой HEX-код'
@@ -48,11 +48,26 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+    tags = models.ManyToManyField(
+        Tag,
+        related_name='recipes',
+        verbose_name='Теги'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор'
+    )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        related_name='recipes',
+        verbose_name='Ингредиенты'
+    )
+    is_favorited = models.BooleanField('В избранном', default=False)
+    is_in_shopping_cart = models.BooleanField(
+        'В списке покупок',
+        default=False
     )
     name = models.CharField(max_length=150, verbose_name='Название')
     image = models.ImageField(
@@ -61,16 +76,6 @@ class Recipe(models.Model):
         blank=True
     )
     text = models.TextField(verbose_name='Описание')
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        related_name='recipes',
-        verbose_name='Ингредиенты'
-    )
-    tags = models.ManyToManyField(
-        Tag,
-        related_name='recipes',
-        verbose_name='Теги'
-    )
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(1)],
         verbose_name='Время приготовления'
@@ -82,7 +87,7 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 

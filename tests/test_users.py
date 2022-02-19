@@ -7,11 +7,14 @@ class TestUsers:
     url = '/api/users/'
 
     @pytest.mark.django_db(transaction=True)
-    def test_users_list__not_auth(self, client, user):
+    def test_users_list(self, client, user_client, user, user_2):
         code_expected = 200
         response = client.get(self.url)
+        response_auth = user_client.get(self.url)
         data = response.json()
+        data_auth = response_auth.json()
         response_data = data['results']
+        response_data_auth = data_auth['results']
         test_user = response_data[0]
         data_expected = {
             'email': user.email,
@@ -25,6 +28,11 @@ class TestUsers:
         assert response.status_code == code_expected, (
             f'Убедитесь, что при запросе `{self.url}` '
             f'возвращается код {code_expected}'
+        )
+        assert response_data == response_data_auth, (
+            f'Проверьте, что результат GET запроса на `{self.url}` '
+            f'от анонима не отличается от результата запроса от '
+            f'авторизованного пользователя'
         )
         assert type(data) == dict, (
             f'Проверьте, что при GET запросе на `{self.url}` '
