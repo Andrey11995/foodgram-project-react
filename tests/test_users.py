@@ -262,7 +262,8 @@ class TestUsers:
             )
             for field in data_expected.items():
                 assert field[0] in response_data.keys(), (
-                    f'Убедитесь, что поле `{field[0]}` присутствует в выдаче'
+                    f'Убедитесь, что добавили поле `{field[0]}` в список '
+                    f'полей `fields` сериализатора модели User'
                 )
                 assert field[1] == response_data[field[0]], (
                     f'Убедитесь, что значение поля `{field[0]}` содержит '
