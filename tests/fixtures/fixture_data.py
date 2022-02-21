@@ -1,3 +1,4 @@
+import base64
 import pytest
 
 from recipes.models import Amount, Ingredient, Recipe, Tag
@@ -19,12 +20,12 @@ def ingredient_2():
 
 @pytest.fixture
 def amount(ingredient):
-    return Amount.objects.create(id=ingredient, amount=2.5)
+    return Amount.objects.create(amount=2.5, ingredient=ingredient)
 
 
 @pytest.fixture
 def amount_2(ingredient_2):
-    return Amount.objects.create(id=ingredient_2, amount=1)
+    return Amount.objects.create(amount=1, ingredient=ingredient_2)
 
 
 @pytest.fixture
@@ -73,3 +74,17 @@ def recipe_2(user, ingredient, tag):
     recipe.ingredients.set(ingredients)
     recipe.tags.set(tags)
     return recipe
+
+
+@pytest.fixture
+def image():
+    small_gif = (
+        b'\x47\x49\x46\x38\x39\x61\x02\x00'
+        b'\x01\x00\x80\x00\x00\x00\x00\x00'
+        b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+        b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+        b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+        b'\x0A\x00\x3B'
+    )
+    encoded_string = base64.b64encode(small_gif)
+    return encoded_string.decode('utf-8')

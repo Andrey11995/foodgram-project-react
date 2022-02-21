@@ -1,23 +1,17 @@
+import json
 import pytest
-
-from django.core.files.uploadedfile import SimpleUploadedFile
+import re
 
 from recipes.models import Recipe
 
 
 class TestUsers:
     url = '/api/recipes/'
-    small_gif = (
-        b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
-        b'\x01\x0a\x00\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
-        b'\x02\x4c\x01\x00\x3b'
-    )
-    test_image = SimpleUploadedFile('small.gif', small_gif,
-                                    content_type='image/gif')
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_list(self, client, user_client, another_user, recipe,
-                          recipe_2, tag, tag_2, ingredient, ingredient_2, amount, amount_2):
+                          recipe_2, tag, tag_2, ingredient, ingredient_2,
+                          amount, amount_2):
         code_expected = 200
         response = client.get(self.url)
         response_auth = user_client.get(self.url)
@@ -26,7 +20,7 @@ class TestUsers:
         response_data = data['results']
         response_data_auth = data_auth['results']
         test_recipe = response_data[0]
-        tags_data = [
+        tags_expected = [
             {
                 'id': tag.id,
                 'name': tag.name,
@@ -40,7 +34,7 @@ class TestUsers:
                 'slug': tag_2.slug
             }
         ]
-        author_data = {
+        author_expected = {
             'email': another_user.email,
             'id': another_user.id,
             'username': another_user.username,
@@ -48,25 +42,25 @@ class TestUsers:
             'last_name': another_user.last_name,
             'is_subscribed': another_user.is_subscribed
         }
-        ingredients_data = [
+        ingredients_expected = [
             {
                 'id': ingredient.id,
                 'name': ingredient.name,
-                'amount': 2.5,
+                'amount': amount.amount,
                 'measurement_unit': ingredient.measurement_unit
             },
             {
                 'id': ingredient_2.id,
                 'name': ingredient_2.name,
-                'amount': 1,
+                'amount': amount_2.amount,
                 'measurement_unit': ingredient_2.measurement_unit
             }
         ]
         data_expected = {
             'id': recipe.id,
-            'tags': tags_data,
-            'author': author_data,
-            'ingredients': ingredients_data,
+            'tags': tags_expected,
+            'author': author_expected,
+            'ingredients': ingredients_expected,
             'is_favorited': recipe.is_favorited,
             'is_in_shopping_cart': recipe.is_in_shopping_cart,
             'name': recipe.name,
@@ -153,7 +147,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_detail(self, client, user_client, user, recipe_2, tag,
-                            ingredient):
+                            ingredient, amount):
         url = self.url + str(recipe_2.id) + '/'
         code_expected = 200
         response = client.get(url)
@@ -180,7 +174,7 @@ class TestUsers:
             {
                 'id': ingredient.id,
                 'name': ingredient.name,
-                'amount': ingredient.amount,
+                'amount': amount.amount,
                 'measurement_unit': ingredient.measurement_unit
             }
         ]
@@ -229,7 +223,7 @@ class TestUsers:
         data = {
             'ingredients': ingredients_data,
             'tags': [tag.id],
-            'image': self.test_image,
+            'image': '',
             'name': 'Рецепт',
             'text': 'Описание рецепта',
             'cooking_time': 1
@@ -262,7 +256,7 @@ class TestUsers:
         response_data = response.json()
         required_field = ['Обязательное поле.']
         data_expected = {
-            'ingredients': required_field,
+            'ingredients': ['Этот список не может быть пустым.'],
             'tags': required_field,
             'image': ['Ни одного файла не было отправлено.'],
             'name': required_field,
@@ -335,42 +329,55 @@ class TestUsers:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_recipes_create__valid_request_data(self, user_client, another_user, tag, tag_2, ingredient, ingredient_2):
+    def test_recipes_create__valid_request_data(self, user_client, user, tag,
+                                                tag_2, image, ingredient,
+                                                ingredient_2):
         recipes_count = Recipe.objects.count()
         code_expected = 201
         valid_ingredients_data = [
             {
-                'id': ingredient.id,
+                'ingredient': ingredient.id,
                 'amount': 2.5
             },
             {
-                'id': ingredient_2.id,
+                'ingredient': ingredient_2.id,
                 'amount': 10
             }
         ]
         valid_data = {
             'ingredients': valid_ingredients_data,
             'tags': [tag.id, tag_2.id],
-            'image': self.test_image,
+            'image': image,
             'name': 'Рецепт',
             'text': 'Описание рецепта',
             'cooking_time': 30
         }
-        response = user_client.post(self.url, data=valid_data)
-        response_data = response.json()
-        print(response_data)
+        author_expected = {
+            'email': user.email,
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_subscribed': user.is_subscribed
+        }
+        image_expected = 'http://testserver/media/recipes/' + r'\w'
         data_expected = {
-            'id': 1,
             'tags': [tag.id, tag_2.id],
-            'author': '',
+            'author': author_expected,
             'ingredients': valid_ingredients_data,
             'is_favorited': False,
             'is_in_shopping_cart': False,
             'name': 'Рецепт',
-            'image': 'test_image.jpg',
             'text': 'Описание рецепта',
             'cooking_time': 30
         }
+        response = user_client.post(
+            self.url,
+            data=json.dumps(valid_data),
+            content_type='application/json'
+        )
+        response_data = response.json()
+        print(response_data)
 
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
@@ -379,6 +386,18 @@ class TestUsers:
         assert Recipe.objects.count() == recipes_count + 1, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
             f'данными создается новый рецепт'
+        )
+        assert 'id' in response_data.keys(), (
+            f'Убедитесь, что поле `id` присутствует в выдаче '
+            f'после успешного создания пользователя'
+        )
+        assert 'image' in response_data.keys(), (
+            f'Убедитесь, что поле `image` присутствует в выдаче '
+            f'после успешного создания пользователя'
+        )
+        assert re.match(image_expected, response_data['image']), (
+            f'Убедитесь, что значение поля `image` содержит '
+            f'корректные данные'
         )
         for field in data_expected.items():
             assert field[0] in response_data.keys(), (

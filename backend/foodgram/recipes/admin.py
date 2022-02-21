@@ -4,5 +4,6 @@ from .models import Amount, Ingredient, Recipe, Tag
 
 admin.site.register(Amount)
 admin.site.register(Ingredient)
+# admin.site.register(IngredientAmount)
 admin.site.register(Recipe)
 admin.site.register(Tag)

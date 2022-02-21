@@ -91,5 +91,5 @@ def token(user):
 @pytest.fixture
 def user_client(token):
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=token["auth_token"])
+    client.credentials(HTTP_AUTHORIZATION=token['auth_token'])
     return client

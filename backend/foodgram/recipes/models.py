@@ -21,13 +21,13 @@ class Ingredient(models.Model):
 
 
 class Amount(models.Model):
-    id = models.OneToOneField(
+    amount = models.FloatField('Количество')
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        primary_key=True,
-        related_name='ingredients'
+        related_name='amounts',
+        verbose_name='Ингредиент'
     )
-    amount = models.FloatField('Количество')
 
     class Meta:
         verbose_name = 'Количество'
@@ -73,9 +73,10 @@ class Recipe(models.Model):
         verbose_name='Автор'
     )
     ingredients = models.ManyToManyField(
-        Ingredient,
+        Amount,
         related_name='recipes',
-        verbose_name='Ингредиенты'
+        verbose_name='Ингредиенты',
+        # through='IngredientAmount'
     )
     is_favorited = models.BooleanField('В избранном', default=False)
     is_in_shopping_cart = models.BooleanField(
@@ -85,7 +86,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=150, verbose_name='Название')
     image = models.ImageField(
         'Картинка',
-        upload_to='recipes/'
+        upload_to='recipes/',
     )
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(
@@ -105,3 +106,16 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# class IngredientAmount(models.Model):
+#     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+#     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+#     amount = models.ForeignKey(Amount, on_delete=models.CASCADE)
+#
+#     class Meta:
+#         verbose_name = 'Количество ингредиентов'
+#         verbose_name_plural = 'Количество ингредиентов'
+#
+#     def __str__(self):
+#         return f'{self.ingredient} - {self.amount}'
