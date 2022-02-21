@@ -331,7 +331,8 @@ class TestUsers:
     @pytest.mark.django_db(transaction=True)
     def test_recipes_create__valid_request_data(self, user_client, user, tag,
                                                 tag_2, image, ingredient,
-                                                ingredient_2):
+                                                ingredient_2, amount,
+                                                amount_2):
         recipes_count = Recipe.objects.count()
         code_expected = 201
         valid_ingredients_data = [
@@ -360,9 +361,37 @@ class TestUsers:
             'last_name': user.last_name,
             'is_subscribed': user.is_subscribed
         }
+        tags_expected = [
+            {
+                'id': tag.id,
+                'name': tag.name,
+                'color': tag.color,
+                'slug': tag.slug
+            },
+            {
+                'id': tag_2.id,
+                'name': tag_2.name,
+                'color': tag_2.color,
+                'slug': tag_2.slug
+            },
+        ]
+        ingredients_expected = [
+            {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.measurement_unit,
+                'amount': amount.amount
+            },
+            {
+                'id': ingredient_2.id,
+                'name': ingredient_2.name,
+                'measurement_unit': ingredient_2.measurement_unit,
+                'amount': amount_2.amount
+            }
+        ]
         image_expected = 'http://testserver/media/recipes/' + r'\w'
         data_expected = {
-            'tags': [tag.id, tag_2.id],
+            'tags': tags_expected,
             'author': author_expected,
             'ingredients': valid_ingredients_data,
             'is_favorited': False,

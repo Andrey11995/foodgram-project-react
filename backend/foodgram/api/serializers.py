@@ -42,6 +42,7 @@ class TagsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
+        read_only_fields = ('name', 'color', 'slug')
 
 
 class Base64ImageField(serializers.ImageField):
@@ -71,13 +72,25 @@ class RecipesSerializer(serializers.ModelSerializer):
                   'cooking_time')
 
 
+class TagListField(serializers.RelatedField):
+
+    def to_representation(self, value):
+        data = {
+            'id': value.id,
+            'name': value.name,
+            'color': value.color,
+            'slug': value.slug
+        }
+        return data
+
+    def to_internal_value(self, data):
+        return data
+
+
 class RecipesCreateSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True) ###
     ingredients = AmountSerializer(many=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
+    tags = TagListField(queryset=Tag.objects.all(), many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -95,8 +108,9 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             amount, status = Amount.objects.get_or_create(**ingredient)
             amounts.append(amount)
+        tags_list = [get_object_or_404(Tag, id=tag) for tag in tags]
         recipe.ingredients.set(amounts)
-        recipe.tags.set(tags)
+        recipe.tags.set(tags_list)
         return recipe
 
     def update(self, instance, validated_data):
