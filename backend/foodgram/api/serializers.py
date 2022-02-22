@@ -2,63 +2,13 @@ import base64
 import imghdr
 import uuid
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from recipes.models import Amount, Ingredient, Recipe, Tag
 from users.serializers import UserSerializer
-
-
-class IngredientsViewSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Ingredient
-        fields = '__all__'
-
-
-class IngredientsForRecipeSerializer(serializers.ModelSerializer):
-    amount = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-        read_only_fields = ('name', 'measurement_unit')
-
-    def get_amount(self, obj):
-        amount_object = get_object_or_404(Amount, ingredient=obj.id)
-        return amount_object.amount
-
-
-class AmountSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(),
-        source='ingredient'
-    )
-    name = serializers.SerializerMethodField()
-    measurement_unit = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Amount
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-
-    def get_name(self, amount):
-        ing_id = amount.ingredient.id
-        ing = get_object_or_404(Ingredient, id=ing_id)
-        return ing.name
-
-    def get_measurement_unit(self, amount):
-        ing_id = amount.ingredient.id
-        ing = get_object_or_404(Ingredient, id=ing_id)
-        return ing.measurement_unit
-
-
-class TagsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Tag
-        fields = '__all__'
-        read_only_fields = ('name', 'color', 'slug')
 
 
 class Base64ImageField(serializers.ImageField):
@@ -76,9 +26,72 @@ class Base64ImageField(serializers.ImageField):
         return super(Base64ImageField, self).to_internal_value(data)
 
 
+class TagListField(serializers.RelatedField):
+
+    def to_representation(self, value):
+        return {
+            'id': value.id,
+            'name': value.name,
+            'color': value.color,
+            'slug': value.slug
+        }
+
+    def to_internal_value(self, data):
+        try:
+            return Tag.objects.get(pk=data)
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                'Недопустимый первичный ключ "404" - объект не существует.'
+            )
+
+
+class IngredientsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+
+
+class IngredientsAmountSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all(),
+        source='ingredient'
+    )
+    name = serializers.SerializerMethodField(read_only=True)
+    measurement_unit = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Amount
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+    def _get_ingredient(self, ingredient_id):
+        return get_object_or_404(Ingredient, id=ingredient_id)
+
+    def get_name(self, amount):
+        return self._get_ingredient(amount.ingredient.id).name
+
+    def get_measurement_unit(self, amount):
+        return self._get_ingredient(amount.ingredient.id).measurement_unit
+
+    def validate_amount(self, amount):
+        if amount <= 0:
+            raise serializers.ValidationError(
+                'Количество ингредиента должно быть больше нуля!'
+            )
+        return amount
+
+
+class TagsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = '__all__'
+        read_only_fields = ('name', 'color', 'slug')
+
+
 class RecipesSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True) ###
-    ingredients = IngredientsForRecipeSerializer(many=True)
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientsAmountSerializer(many=True)
     tags = TagsSerializer(many=True)
 
     class Meta:
@@ -88,24 +101,9 @@ class RecipesSerializer(serializers.ModelSerializer):
                   'cooking_time')
 
 
-class TagListField(serializers.RelatedField):
-
-    def to_representation(self, value):
-        data = {
-            'id': value.id,
-            'name': value.name,
-            'color': value.color,
-            'slug': value.slug
-        }
-        return data
-
-    def to_internal_value(self, data):
-        return data
-
-
 class RecipesCreateSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True) ###
-    ingredients = AmountSerializer(many=True)
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientsAmountSerializer(many=True)
     tags = TagListField(queryset=Tag.objects.all(), many=True)
     image = Base64ImageField()
 
@@ -124,9 +122,8 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             amount, status = Amount.objects.get_or_create(**ingredient)
             amounts.append(amount)
-        tags_list = [get_object_or_404(Tag, id=tag) for tag in tags]
         recipe.ingredients.set(amounts)
-        recipe.tags.set(tags_list)
+        recipe.tags.set(tags)
         return recipe
 
     def update(self, instance, validated_data):

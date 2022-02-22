@@ -76,7 +76,6 @@ class Recipe(models.Model):
         Amount,
         related_name='recipes',
         verbose_name='Ингредиенты',
-        # through='IngredientAmount'
     )
     is_favorited = models.BooleanField('В избранном', default=False)
     is_in_shopping_cart = models.BooleanField(

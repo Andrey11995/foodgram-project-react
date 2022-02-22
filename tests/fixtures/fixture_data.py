@@ -43,9 +43,8 @@ def tag_2():
 
 
 @pytest.fixture
-def recipe(another_user, ingredient, ingredient_2, tag, tag_2):
-    image = 'https://site.test/image.jpg'
-    ingredients = [ingredient, ingredient_2]
+def recipe(another_user, tag, tag_2, image, amount, amount_2):
+    ingredients = [amount, amount_2]
     tags = [tag, tag_2]
     recipe = Recipe.objects.create(
         author=another_user,
@@ -60,9 +59,8 @@ def recipe(another_user, ingredient, ingredient_2, tag, tag_2):
 
 
 @pytest.fixture
-def recipe_2(user, ingredient, tag):
-    image = 'https://site.test/image2.jpg'
-    ingredients = [ingredient]
+def recipe_2(user, tag, image, amount):
+    ingredients = [amount]
     tags = [tag]
     recipe = Recipe.objects.create(
         author=user,
