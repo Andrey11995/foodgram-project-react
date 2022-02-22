@@ -18,23 +18,39 @@ class IngredientsViewSerializer(serializers.ModelSerializer):
 
 
 class IngredientsForRecipeSerializer(serializers.ModelSerializer):
-    # amount = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
 
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+        read_only_fields = ('name', 'measurement_unit')
 
-    # def get_amount(self, obj):
-    #     amount_object = get_object_or_404(Amount, ingredient_id=obj.id)
-    #     return amount_object.amount
+    def get_amount(self, obj):
+        amount_object = get_object_or_404(Amount, ingredient=obj.id)
+        return amount_object.amount
 
 
 class AmountSerializer(serializers.ModelSerializer):
-    # id = serializers.IntegerField(source='ingredient')
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all(),
+        source='ingredient'
+    )
+    name = serializers.SerializerMethodField()
+    measurement_unit = serializers.SerializerMethodField()
 
     class Meta:
         model = Amount
-        fields = ('ingredient', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+    def get_name(self, amount):
+        ing_id = amount.ingredient.id
+        ing = get_object_or_404(Ingredient, id=ing_id)
+        return ing.name
+
+    def get_measurement_unit(self, amount):
+        ing_id = amount.ingredient.id
+        ing = get_object_or_404(Ingredient, id=ing_id)
+        return ing.measurement_unit
 
 
 class TagsSerializer(serializers.ModelSerializer):
