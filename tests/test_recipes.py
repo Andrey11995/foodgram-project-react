@@ -218,16 +218,36 @@ class TestRecipes:
         )
 
     @pytest.mark.django_db(transaction=True)
-    def test_recipes_create__empty_request_data(self, user_client):
+    def test_recipes_create__empty_request_data(self, user_client, recipe_2):
+        urls = {
+            'POST': self.url,
+            'PUT': f'{self.url}{str(recipe_2.id)}/'
+        }
         recipes_count = Recipe.objects.count()
         code_expected = 400
         empty_data = {}
-        response = user_client.post(
-            self.url,
+        response_check_1 = user_client.get(
+            urls['PUT'],
+            content_type='application/json'
+        )
+        response_create = user_client.post(
+            urls['POST'],
             data=json.dumps(empty_data),
             content_type='application/json'
         )
-        response_data = response.json()
+        response_update = user_client.put(
+            urls['PUT'],
+            data=json.dumps(empty_data),
+            content_type='application/json'
+        )
+        response_check_2 = user_client.get(
+            urls['PUT'],
+            content_type='application/json'
+        )
+        requests = {
+            'POST': response_create,
+            'PUT': response_update
+        }
         required_field = ['Обязательное поле.']
         data_expected = {
             'ingredients': required_field,
@@ -237,23 +257,27 @@ class TestRecipes:
             'text': required_field,
             'cooking_time': required_field
         }
-
-        assert response.status_code == code_expected, (
-            f'Проверьте, что при POST запросе на `{self.url}` без данных '
-            f'возвращается статус {code_expected}'
-        )
+        for request, response in requests.items():
+            assert response.status_code == code_expected, (
+                f'Проверьте, что при {request} запросе на `{urls[request]}` '
+                f'без данных, возвращается статус {code_expected}'
+            )
+            for field in data_expected.items():
+                assert field[0] in response.json().keys(), (
+                    f'Проверьте, что поле `{field[0]}` является обязательным'
+                )
+                assert field[1] == response.json()[field[0]], (
+                    f'Убедитесь, что значение поля `{field[0]}` после '
+                    f'{request} запроса без данных: `{field[1]}`'
+                )
         assert Recipe.objects.count() == recipes_count, (
-            f'Проверьте, что при POST запросе на `{self.url}` без данных '
-            f'не создается новый рецепт'
+            f'Проверьте, что при POST запросе на `{urls["POST"]}` '
+            f'без данных, не создается новый рецепт'
         )
-        for field in data_expected.items():
-            assert field[0] in response_data.keys(), (
-                f'Проверьте, что поле `{field[0]}` является обязательным'
-            )
-            assert field[1] == response_data[field[0]], (
-                f'Убедитесь, что значение поля `{field[0]}` после POST '
-                f'запроса без данных: `{field[1]}`'
-            )
+        assert response_check_1.json() == response_check_2.json(), (
+            f'Проверьте, что при PUT запросе на `{urls["PUT"]}` '
+            f'без данных, рецепт не изменяется'
+        )
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_create__invalid_request_data(self, user_client):
@@ -676,3 +700,23 @@ class TestRecipes:
                         f'Убедитесь, что значение поля `{field[0]}` в поле '
                         f'`{checked}` содержит корректные данные'
                     )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_update_delete__owner(self, user_client, recipe_2):
+        url = f'{self.url}{str(recipe_2.id)}/'
+        recipes_count = Recipe.objects.count()
+        code_expected = 204
+        response = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при DELETE запросе на `{url}` '
+            f'на свой существующий рецепт, возвращается код '
+            f'{code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count - 1, (
+            f'Проверьте, что при DELETE запросе на `{url}` '
+            f'на свой существующий рецепт, он удаляется'
+        )
