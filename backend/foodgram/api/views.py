@@ -1,6 +1,5 @@
-from rest_framework import mixins, permissions, viewsets
-
 from recipes.models import Ingredient, Recipe, Tag
+from rest_framework import mixins, permissions, viewsets
 
 from .permissions import IsAuthOwnerOrReadOnly
 from .serializers import (IngredientsSerializer, RecipesCreateSerializer,
@@ -32,7 +31,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthOwnerOrReadOnly]
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'update':
             return RecipesCreateSerializer
         return RecipesSerializer
 

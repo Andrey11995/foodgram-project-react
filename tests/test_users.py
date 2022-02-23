@@ -200,7 +200,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_detail__not_auth(self, client, user):
-        url = self.url + str(user.id) + '/'
+        url = f'{self.url}{str(user.id)}/'
         code_expected = 401
         data_expected = {'detail': 'Учетные данные не были предоставлены.'}
         response = client.get(url)
@@ -219,8 +219,8 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_detail__not_found(self, user_client, user):
-        url = self.url + '404/'
         code_expected = 404
+        url = f'{self.url}{code_expected}/'
         data_expected = {'detail': 'Страница не найдена.'}
         response = user_client.get(url)
         response_data = response.json()
@@ -239,8 +239,8 @@ class TestUsers:
     @pytest.mark.django_db(transaction=True)
     def test_users_detail_me__auth_user(self, user_client, user):
         urls = [
-            self.url + str(user.id) + '/',
-            self.url + 'me/'
+            f'{self.url}{str(user.id)}/',
+            f'{self.url}me/'
         ]
         code_expected = 200
         data_expected = {
@@ -272,7 +272,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_me__not_auth(self, client, user):
-        url = self.url + 'me/'
+        url = f'{self.url}me/'
         code_expected = 401
         data_expected = {'detail': 'Учетные данные не были предоставлены.'}
         response = client.get(url)
@@ -291,7 +291,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_set_password__not_auth(self, client):
-        url = self.url + 'set_password/'
+        url = f'{self.url}set_password/'
         code_expected = 401
         data_expected = {'detail': 'Учетные данные не были предоставлены.'}
         response = client.get(url)
@@ -310,7 +310,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_set_password__invalid_data(self, user_client):
-        url = self.url + 'set_password/'
+        url = f'{self.url}set_password/'
         code_expected = 400
         invalid_data = {
             'new_password': 'password',
@@ -354,7 +354,7 @@ class TestUsers:
 
     @pytest.mark.django_db(transaction=True)
     def test_users_set_password__valid_data(self, client, user_client, user):
-        url = self.url + 'set_password/'
+        url = f'{self.url}set_password/'
         code_expected = 204
         valid_data = {
             'new_password': 'NewPassword654321',

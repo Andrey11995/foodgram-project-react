@@ -5,9 +5,8 @@ import uuid
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-
 from recipes.models import Amount, Ingredient, Recipe, Tag
+from rest_framework import serializers
 from users.serializers import UserSerializer
 
 
@@ -73,13 +72,6 @@ class IngredientsAmountSerializer(serializers.ModelSerializer):
     def get_measurement_unit(self, amount):
         return self._get_ingredient(amount.ingredient.id).measurement_unit
 
-    def validate_amount(self, amount):
-        if amount <= 0:
-            raise serializers.ValidationError(
-                'Количество ингредиента должно быть больше нуля!'
-            )
-        return amount
-
 
 class TagsSerializer(serializers.ModelSerializer):
 
@@ -127,10 +119,25 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        pass
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        instance.name = validated_data.get('name')
+        instance.image = validated_data.get('image')
+        instance.text = validated_data.get('text')
+        instance.cooking_time = validated_data.get(
+            'cooking_time'
+        )
+        instance.save()
+        amounts = []
+        for ingredient in ingredients:
+            amount = get_object_or_404(Amount, **ingredient)
+            amounts.append(amount)
+        instance.ingredients.set(amounts)
+        instance.tags.set(tags)
+        return instance
 
     def validate_name(self, name):
-        if not name.istitle():
+        if not name.split(' ')[0].istitle():
             raise serializers.ValidationError(
                 'Название должно начинаться с заглавной буквы!'
             )
@@ -141,7 +148,11 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         return name
 
     def validate_text(self, text):
-        if len(text) < 10:
+        if not text.split(' ')[0].istitle():
+            raise serializers.ValidationError(
+                'Описание должно начинаться с заглавной буквы!'
+            )
+        elif len(text) < 10:
             raise serializers.ValidationError(
                 'Описание должно содержать от 10 символов!'
             )

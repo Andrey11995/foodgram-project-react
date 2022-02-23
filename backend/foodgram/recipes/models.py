@@ -1,6 +1,5 @@
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from users.models import User
 
 
@@ -21,7 +20,10 @@ class Ingredient(models.Model):
 
 
 class Amount(models.Model):
-    amount = models.FloatField('Количество')
+    amount = models.FloatField(
+        'Количество',
+        validators=[MinValueValidator(1)]
+    )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
