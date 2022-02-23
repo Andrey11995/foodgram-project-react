@@ -12,7 +12,7 @@ class TestRecipes:
     def test_recipes_list_and_detail(self, client, user_client, another_user,
                                      recipe, recipe_2, tag, tag_2, ingredient,
                                      ingredient_2, amount, amount_2):
-        url_detail = self.url + str(recipe.id) + '/'
+        url_detail = f'{self.url}{str(recipe.id)}/'
         code_expected = 200
         response = client.get(self.url, content_type='application/json')
         response_auth = user_client.get(
@@ -146,7 +146,7 @@ class TestRecipes:
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_detail__not_found(self, client, user):
-        url = self.url + '404/'
+        url = f'{self.url}404/'
         code_expected = 404
         data_expected = {'detail': 'Страница не найдена.'}
         response = client.get(url, content_type='application/json')

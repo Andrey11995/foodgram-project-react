@@ -86,3 +86,23 @@ def image():
     )
     encoded_string = base64.b64encode(small_gif)
     return encoded_string.decode('utf-8')
+
+
+@pytest.fixture
+def many_recipes(another_user, tag, image, amount):
+    def recipe(user, tags, img, amounts, index):
+        ingredients = [amounts]
+        tags = [tags]
+        recipe = Recipe.objects.create(
+            author=user,
+            image=img,
+            name=f'Тестовый рецепт {index}',
+            text=f'Описание тестового рецепта {index}',
+            cooking_time=10
+        )
+        recipe.ingredients.set(ingredients)
+        recipe.tags.set(tags)
+        return recipe
+
+    for i in range(10):
+        recipe(another_user, tag, image, amount, i)
