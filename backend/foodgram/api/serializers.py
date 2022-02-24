@@ -85,12 +85,23 @@ class RecipesSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     ingredients = IngredientsAmountSerializer(many=True)
     tags = TagsSerializer(many=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
+
+    def get_is_favorited(self, recipe):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            fav = Favorite.objects.filter(
+                user=user,
+                recipe=recipe
+            ).exists()
+            return fav
+        return False
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
@@ -160,28 +171,24 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField(read_only=True)
-    name = serializers.SerializerMethodField(read_only=True)
-    image = serializers.SerializerMethodField(read_only=True)
-    cooking_time = serializers.SerializerMethodField(read_only=True)
+    id = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    cooking_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Favorite
         fields = 'id', 'name', 'image', 'cooking_time'
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
 
-    def _get_recipe(self, recipe_id):
-        return get_object_or_404(Recipe, id=recipe_id)
+    def get_id(self, favorite):
+        return favorite.recipe.id
 
-    def get_id(self, recipe):
-        return recipe.id
+    def get_name(self, favorite):
+        return favorite.recipe.name
 
-    def get_name(self, recipe):
-        return self._get_recipe(recipe.id).name
+    def get_image(self, favorite):
+        return favorite.recipe.image.url
 
-    def get_image(self, recipe):
-        image = self._get_recipe(recipe.id).image
-        return image
-
-    def get_cooking_time(self, recipe):
-        return self._get_recipe(recipe.id).cooking_time
+    def get_cooking_time(self, favorite):
+        return favorite.recipe.cooking_time

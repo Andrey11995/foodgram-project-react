@@ -128,4 +128,4 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранное'
 
     def __str__(self):
-        return f'{self.recipe} - {self.user}'
+        return f'{self.recipe.name} - {self.user.username}'

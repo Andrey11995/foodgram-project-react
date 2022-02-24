@@ -1,7 +1,7 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from recipes.models import Ingredient, Favorite, Recipe, Tag
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.response import Response
 
 from .permissions import IsAuthOwnerOrReadOnly
@@ -17,8 +17,8 @@ class RetrieveListViewSet(mixins.ListModelMixin,
 
 
 class CreateDestroyViewSet(mixins.CreateModelMixin,
-                          mixins.DestroyModelMixin,
-                          viewsets.GenericViewSet):
+                           mixins.DestroyModelMixin,
+                           viewsets.GenericViewSet):
     pass
 
 
@@ -49,29 +49,29 @@ class RecipesViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 
-class FavoriteViewSet(CreateDestroyViewSet):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
+class FavoriteView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def _get_recipe(self):
-        return get_object_or_404(Recipe, id=self.kwargs.get('recipe_id'))
+    def post(self, request, recipe_id):
+        serializer = FavoriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        double_favorite = Favorite.objects.filter(
+            user=request.user,
+            recipe=recipe
+        ).exists()
+        if double_favorite:
+            error = {'errors': 'Рецепт уже добавлен в избранное'}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save(user=request.user, recipe=recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user, recipe=self._get_recipe())
-
-
-
-# @api_view(['POST', 'DELETE'])
-# def favorite_view(request):
-#     serializer = FavoriteSerializer()
-#     serializer.is_valid(raise_exception=True)
-#     if request.method == 'POST':
-#         # Favorite.objects.create(user=request.user, recipe=request.data)
-#         return Response(
-#             serializer.validated_data,
-#             status=status.HTTP_201_CREATED
-#         )
-#     favorite = get_object_or_404(Favorite, user=request.user, recipe=recipe_id)
-#     favorite.delete()
-#     return Response(status=status.HTTP_204_NO_CONTENT)
+    def delete(self, request, recipe_id):
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        try:
+            favorite = Favorite.objects.get(user=request.user, recipe=recipe)
+        except ObjectDoesNotExist:
+            error = {'errors': 'Рецепт не найден'}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

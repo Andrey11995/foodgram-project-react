@@ -485,14 +485,14 @@ class TestRecipes:
             'text': 'Измененное описание рецепта',
             'cooking_time': 30
         }
-        response_check_1 = client.get(url, content_type='application/json')
+        response_before = client.get(url, content_type='application/json')
         response_update = client.put(
             url,
             data=valid_data,
             content_type='application/json'
         )
         response_delete = client.delete(url, content_type='application/json')
-        response_check_2 = client.get(url, content_type='application/json')
+        response_after = client.get(url, content_type='application/json')
         requests = {
             'PUT': response_update,
             'DELETE': response_delete
@@ -509,7 +509,7 @@ class TestRecipes:
                 f'от неавторизованного пользователя, возвращается сообщение: '
                 f'{data_expected["detail"]}'
             )
-        assert response_check_1.json() == response_check_2.json(), (
+        assert response_before.json() == response_after.json(), (
             f'Проверьте, что при PUT запросе на `{url}` '
             f'от неавторизованного пользователя, рецепт не изменяется'
         )
@@ -725,43 +725,60 @@ class TestRecipes:
 class TestFavorites:
 
     @pytest.mark.django_db(transaction=True)
-    def test_favorites_create(self, user_client, ingredient, tag,
-                              image, amount):
+    def test_favorites_create__not_auth(self, client, recipe):
+        url = f'/api/recipes/{str(recipe.id)}/favorite/'
+        code_expected = 401
         favorites_count = Favorite.objects.count()
-        code_expected = 201
-        data = {
-            'ingredients': [
-                {
-                    'id': ingredient.id,
-                    'amount': amount.amount
-                }
-            ],
-            'tags': [tag.id],
-            'image': image,
-            'name': 'Избранный рецепт',
-            'text': 'Описание рецепта',
-            'cooking_time': 30
-        }
-        create_recipe = user_client.post(
-            '/api/recipes/',
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        recipe = create_recipe.json()
-        url = f'/api/recipes/{str(recipe["id"])}/favorite/'
-
-        response = user_client.post(
+        response = client.post(
             url,
             content_type='application/json'
         )
         response_data = response.json()
-        print(response_data)
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Favorite.objects.count() == favorites_count, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, не создается объект модели `Favorite` в базе '
+            f'данных'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_favorites_create__auth_user(self, user_client, recipe, ingredient,
+                                         tag, image, amount):
+        url = f'/api/recipes/{str(recipe.id)}/favorite/'
+        favorites_count = Favorite.objects.count()
+        code_expected = 201
+        response = user_client.post(
+            url,
+            content_type='application/json'
+        )
+        response_check = user_client.get(
+            f'/api/recipes/{str(recipe.id)}/',
+            content_type='application/json'
+        )
+        response_double = user_client.post(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        response_data_check = response_check.json()
+        response_data_double = response_double.json()
+        image_expected = '/media/' + r'\w'
         data_expected = {
-            'id': recipe['id'],
-            'name': recipe['name'],
-            'image': recipe['image'],
-            'cooking_time': recipe['cooking_time']
+            'id': recipe.id,
+            'name': recipe.name,
+            'cooking_time': recipe.cooking_time
         }
+        double_expected = {'errors': 'Рецепт уже добавлен в избранное'}
+
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{url}` от авторизованного '
             f'пользователя, возвращается статус {code_expected}'
@@ -769,6 +786,19 @@ class TestFavorites:
         assert Favorite.objects.count() == favorites_count + 1, (
             f'Проверьте, что при POST запросе на `{url}` от авторизованного '
             f'пользователя, создается объект модели `Favorite` в базе данных'
+        )
+        assert response_data_double == double_expected, (
+            f'Убедитесь, что нельзя добавить рецепт в избранное дважды'
+        )
+        assert response_data_check['is_favorited'] is True, (
+            f'Убедитесь, что после добавления рецепта в избранное, поле '
+            f'рецепта `is_favorited` имеет значение `True`'
+        )
+        assert 'image' in response_data.keys(), (
+            f'Убедитесь, что поле `image` присутствует в выдаче'
+        )
+        assert re.match(image_expected, response_data['image']), (
+            f'Убедитесь, что поле `image` содержит корректные данные'
         )
         for field in data_expected.items():
             assert field[0] in response_data.keys(), (
@@ -779,7 +809,77 @@ class TestFavorites:
                 f'Убедитесь, что значение поля `{field[0]}` после успешного '
                 f'добавления рецепта в избранное, содержит корректные данные'
             )
-        # assert Recipe.objects.count() == recipes_count, (
-        #     f'Проверьте, что при POST запросе на `{urls["POST"]}` '
-        #     f'без данных, не создается новый рецепт'
-        # )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_favorites_delete__not_auth(self, client, recipe_2):
+        url = f'/api/recipes/{str(recipe_2.id)}/favorite/'
+        code_expected = 401
+        client.post(
+            url,
+            content_type='application/json'
+        )
+        favorites_count = Favorite.objects.count()
+        response = client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Favorite.objects.count() == favorites_count, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, не создается объект модели `Favorite` в базе '
+            f'данных'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_favorites_delete__auth_user(self, user_client, recipe_2):
+        url = f'/api/recipes/{str(recipe_2.id)}/favorite/'
+        code_expected = 204
+        user_client.post(
+            url,
+            content_type='application/json'
+        )
+        favorites_count = Favorite.objects.count()
+        response_before = user_client.get(
+            f'/api/recipes/{str(recipe_2.id)}/',
+            content_type='application/json'
+        )
+        response = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_after = user_client.get(
+            f'/api/recipes/{str(recipe_2.id)}/',
+            content_type='application/json'
+        )
+        response_double = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_data_before = response_before.json()
+        response_data_after = response_after.json()
+        response_data_double = response_double.json()
+
+        assert (response_data_before['is_favorited']
+                != response_data_after['is_favorited']), (
+            f'Убедитесь, что значение поля `is_favorite` до DELETE запроса '
+            f'отличается от значения этого поля после удаления из избранного'
+        )
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Favorite.objects.count() == favorites_count - 1, (
+            f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
+            f'пользователя, удаляется объект модели `Favorite` в базе '
+            f'данных'
+        )
