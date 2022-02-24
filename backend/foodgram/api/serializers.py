@@ -5,7 +5,7 @@ import uuid
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from recipes.models import Amount, Ingredient, Recipe, Tag
+from recipes.models import Amount, Ingredient, Recipe, Tag, Favorite
 from rest_framework import serializers
 from users.serializers import UserSerializer
 
@@ -157,3 +157,31 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
                 'Описание должно содержать от 10 символов!'
             )
         return text
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField(read_only=True)
+    name = serializers.SerializerMethodField(read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
+    cooking_time = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = 'id', 'name', 'image', 'cooking_time'
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+    def _get_recipe(self, recipe_id):
+        return get_object_or_404(Recipe, id=recipe_id)
+
+    def get_id(self, recipe):
+        return recipe.id
+
+    def get_name(self, recipe):
+        return self._get_recipe(recipe.id).name
+
+    def get_image(self, recipe):
+        image = self._get_recipe(recipe.id).image
+        return image
+
+    def get_cooking_time(self, recipe):
+        return self._get_recipe(recipe.id).cooking_time

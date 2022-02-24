@@ -109,14 +109,23 @@ class Recipe(models.Model):
         return self.name
 
 
-# class IngredientAmount(models.Model):
-#     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-#     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-#     amount = models.ForeignKey(Amount, on_delete=models.CASCADE)
-#
-#     class Meta:
-#         verbose_name = 'Количество ингредиентов'
-#         verbose_name_plural = 'Количество ингредиентов'
-#
-#     def __str__(self):
-#         return f'{self.ingredient} - {self.amount}'
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+
+    def __str__(self):
+        return f'{self.recipe} - {self.user}'

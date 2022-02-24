@@ -2,7 +2,7 @@ import json
 import pytest
 import re
 
-from recipes.models import Recipe
+from recipes.models import Favorite, Recipe
 
 
 class TestRecipes:
@@ -720,3 +720,66 @@ class TestRecipes:
             f'Проверьте, что при DELETE запросе на `{url}` '
             f'на свой существующий рецепт, он удаляется'
         )
+
+
+class TestFavorites:
+
+    @pytest.mark.django_db(transaction=True)
+    def test_favorites_create(self, user_client, ingredient, tag,
+                              image, amount):
+        favorites_count = Favorite.objects.count()
+        code_expected = 201
+        data = {
+            'ingredients': [
+                {
+                    'id': ingredient.id,
+                    'amount': amount.amount
+                }
+            ],
+            'tags': [tag.id],
+            'image': image,
+            'name': 'Избранный рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+        create_recipe = user_client.post(
+            '/api/recipes/',
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        recipe = create_recipe.json()
+        url = f'/api/recipes/{str(recipe["id"])}/favorite/'
+
+        response = user_client.post(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        print(response_data)
+        data_expected = {
+            'id': recipe['id'],
+            'name': recipe['name'],
+            'image': recipe['image'],
+            'cooking_time': recipe['cooking_time']
+        }
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{url}` от авторизованного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Favorite.objects.count() == favorites_count + 1, (
+            f'Проверьте, что при POST запросе на `{url}` от авторизованного '
+            f'пользователя, создается объект модели `Favorite` в базе данных'
+        )
+        for field in data_expected.items():
+            assert field[0] in response_data.keys(), (
+                f'Убедитесь, что поле `{field[0]}` присутствует в выдаче '
+                f'после успешного добавления рецепта в избранное'
+            )
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что значение поля `{field[0]}` после успешного '
+                f'добавления рецепта в избранное, содержит корректные данные'
+            )
+        # assert Recipe.objects.count() == recipes_count, (
+        #     f'Проверьте, что при POST запросе на `{urls["POST"]}` '
+        #     f'без данных, не создается новый рецепт'
+        # )
