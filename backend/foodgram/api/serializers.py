@@ -5,8 +5,9 @@ import uuid
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from recipes.models import Amount, Ingredient, Recipe, Tag, Favorite
 from rest_framework import serializers
+
+from recipes.models import Amount, Favorite, Ingredient, Recipe, Tag
 from users.serializers import UserSerializer
 
 
@@ -96,11 +97,10 @@ class RecipesSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, recipe):
         user = self.context['request'].user
         if user.is_authenticated:
-            is_favorite = Favorite.objects.filter(
+            return Favorite.objects.filter(
                 user=user,
                 recipe=recipe
             ).exists()
-            return is_favorite
         return False
 
 
@@ -169,27 +169,3 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
                 'Описание должно содержать от 10 символов!'
             )
         return text
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
-    cooking_time = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Favorite
-        fields = 'id', 'name', 'image', 'cooking_time'
-        read_only_fields = ('id', 'name', 'image', 'cooking_time')
-
-    def get_id(self, favorite):
-        return favorite.recipe.id
-
-    def get_name(self, favorite):
-        return favorite.recipe.name
-
-    def get_image(self, favorite):
-        return favorite.recipe.image.url
-
-    def get_cooking_time(self, favorite):
-        return favorite.recipe.cooking_time

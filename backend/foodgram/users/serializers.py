@@ -3,8 +3,9 @@ import re
 from django.contrib.auth import password_validation as pass_val
 from rest_framework import serializers
 
+from recipes.serializers import RecipePartialSerializer
+
 from .models import Subscription, User
-from recipes.models import Recipe
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,11 +19,10 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, subscribe):
         user = self.context['request'].user
         if user.is_authenticated:
-            is_subscribed = Subscription.objects.filter(
+            return Subscription.objects.filter(
                 user=user,
                 subscribe=subscribe
             ).exists()
-            return is_subscribed
         return False
 
 
@@ -85,17 +85,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
                   'password')
 
 
-class RecipeSubscribeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-        read_only_fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class SubscribeSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
-    recipes = RecipeSubscribeSerializer(many=True, read_only=True)
+    recipes = RecipePartialSerializer(many=True)
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -109,11 +101,10 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, subscribe):
         user = self.context['request'].user
         if user.is_authenticated:
-            is_subscribed = Subscription.objects.filter(
+            return Subscription.objects.filter(
                 user=user,
                 subscribe=subscribe
             ).exists()
-            return is_subscribed
         return False
 
     def get_recipes_count(self, subscribe):

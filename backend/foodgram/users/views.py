@@ -3,14 +3,12 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .models import Subscription, User
 from .permissions import IsAuthOrCreateList
-from .serializers import (RecipeSubscribeSerializer, SubscribeSerializer,
-                          UserCreateSerializer, UserSerializer)
-from recipes.models import Recipe
+from .serializers import (SubscribeSerializer, UserCreateSerializer,
+                          UserSerializer)
 
 
 class CreateRetrieveListViewSet(mixins.CreateModelMixin,
