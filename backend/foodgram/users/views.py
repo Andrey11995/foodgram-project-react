@@ -1,11 +1,15 @@
+from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import mixins, permissions, response, status, viewsets
+from rest_framework import (mixins, permissions, response, status, views,
+                            viewsets)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import User
+from .models import Subscription, User
 from .permissions import IsAuthOrCreateList
-from .serializers import UserCreateSerializer, UserSerializer
+from .serializers import (RecipeSubscribeSerializer, UserCreateSerializer,
+                          UserSerializer)
+from recipes.models import Recipe
 
 
 class CreateRetrieveListViewSet(mixins.CreateModelMixin,
@@ -54,3 +58,47 @@ class UserViewSet(CreateRetrieveListViewSet):
         )
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        pass
+
+    def post(self, request, user_id):
+        subscribe_user = get_object_or_404(User, id=user_id)
+        double_subscribe = Subscription.objects.filter(
+            user=request.user,
+            subscribe=subscribe_user
+        ).exists()
+        if str(request.user.id) == user_id:
+            error = {'errors': 'Невозможно подписаться на самого себя'}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        elif double_subscribe:
+            error = {'errors': 'Вы уже подписаны на этого пользователя'}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        Subscription.objects.create(
+            user=request.user,
+            subscribe=subscribe_user
+        )
+        recipes = Recipe.objects.filter(author=subscribe_user)
+        recipes_serializer = RecipeSubscribeSerializer(
+            recipes,
+            many=True,
+            read_only=True
+        )
+        recipes_count = Recipe.objects.filter(author=subscribe_user).count()
+        response_data = {
+            'email': subscribe_user.email,
+            'id': subscribe_user.id,
+            'username': subscribe_user.username,
+            'first_name': subscribe_user.first_name,
+            'last_name': subscribe_user.last_name,
+            'recipes': recipes_serializer.data,
+            'recipes_count': recipes_count
+        }
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, user_id):
+        pass

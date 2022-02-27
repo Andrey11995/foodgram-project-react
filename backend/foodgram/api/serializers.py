@@ -96,11 +96,11 @@ class RecipesSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, recipe):
         user = self.context['request'].user
         if user.is_authenticated:
-            fav = Favorite.objects.filter(
+            is_favorite = Favorite.objects.filter(
                 user=user,
                 recipe=recipe
             ).exists()
-            return fav
+            return is_favorite
         return False
 
 
@@ -132,11 +132,12 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        instance.name = validated_data.get('name')
-        instance.image = validated_data.get('image')
-        instance.text = validated_data.get('text')
+        instance.name = validated_data.get('name', instance.name)
+        instance.image = validated_data.get('image', instance.image)
+        instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get(
-            'cooking_time'
+            'cooking_time',
+            instance.cooking_time
         )
         instance.save()
         amounts = []

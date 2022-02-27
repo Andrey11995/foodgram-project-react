@@ -3,15 +3,27 @@ import re
 from django.contrib.auth import password_validation as pass_val
 from rest_framework import serializers
 
-from .models import User
+from .models import Subscription, User
+from recipes.models import Recipe
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed')
+
+    def get_is_subscribed(self, subscribe):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            is_subscribed = Subscription.objects.filter(
+                user=user,
+                subscribe=subscribe
+            ).exists()
+            return is_subscribed
+        return False
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -71,3 +83,27 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'password')
+
+
+class RecipeSubscribeSerializer(serializers.ModelSerializer):
+    # id = serializers.SerializerMethodField()
+    # name = serializers.SerializerMethodField()
+    # image = serializers.SerializerMethodField()
+    # cooking_time = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = 'id', 'name', 'image', 'cooking_time'
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+    # def get_id(self, subscribe):
+    #     return subscribe.recipe.id
+    #
+    # def get_name(self, subscribe):
+    #     return subscribe.recipe.name
+    #
+    # def get_image(self, recipe):
+    #     return recipe.image.url
+
+    # def get_cooking_time(self, subscribe):
+    #     return subscribe.recipe.cooking_time
