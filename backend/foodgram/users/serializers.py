@@ -86,24 +86,24 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class RecipeSubscribeSerializer(serializers.ModelSerializer):
-    # id = serializers.SerializerMethodField()
-    # name = serializers.SerializerMethodField()
-    # image = serializers.SerializerMethodField()
-    # cooking_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = 'id', 'name', 'image', 'cooking_time'
+        fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
 
-    # def get_id(self, subscribe):
-    #     return subscribe.recipe.id
-    #
-    # def get_name(self, subscribe):
-    #     return subscribe.recipe.name
-    #
-    # def get_image(self, recipe):
-    #     return recipe.image.url
 
-    # def get_cooking_time(self, subscribe):
-    #     return subscribe.recipe.cooking_time
+class SubscribeSerializer(serializers.ModelSerializer):
+    recipes = RecipeSubscribeSerializer(many=True)
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count')
+        read_only_fields = ('email', 'id', 'username', 'first_name',
+                            'last_name', 'is_subscribed', 'recipes',
+                            'recipes_count')
+
+    def get_recipes_count(self, user):
+        return user.recipes.count()

@@ -71,7 +71,7 @@ class FavoriteView(views.APIView):
         try:
             favorite = Favorite.objects.get(user=request.user, recipe=recipe)
         except ObjectDoesNotExist:
-            error = {'errors': 'Рецепт не найден'}
+            error = {'errors': 'Этого рецепта нет в избранном'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

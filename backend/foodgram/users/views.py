@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import (mixins, permissions, response, status, views,
@@ -7,8 +8,8 @@ from rest_framework.response import Response
 
 from .models import Subscription, User
 from .permissions import IsAuthOrCreateList
-from .serializers import (RecipeSubscribeSerializer, UserCreateSerializer,
-                          UserSerializer)
+from .serializers import (RecipeSubscribeSerializer, SubscribeSerializer,
+                          UserCreateSerializer, UserSerializer)
 from recipes.models import Recipe
 
 
@@ -31,6 +32,8 @@ class UserViewSet(CreateRetrieveListViewSet):
             return UserSerializer
         elif self.action == 'set_password':
             return SetPasswordSerializer
+        elif self.action == 'subscriptions':
+            return SubscribeSerializer
         return self.serializer_class
 
     @action(
@@ -40,7 +43,7 @@ class UserViewSet(CreateRetrieveListViewSet):
     )
     def me(self, request):
         serializer = self.get_serializer(request.user)
-        return response.Response(
+        return Response(
             serializer.data,
             status=status.HTTP_200_OK
         )
@@ -59,12 +62,22 @@ class UserViewSet(CreateRetrieveListViewSet):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(
+        detail=False,
+        methods=['GET'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def subscriptions(self, request, *args, **kwargs):
+        subscribe_users = User.objects.filter(subscribing__user=request.user)
+        serializer = self.get_serializer(subscribe_users, many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
 
 class SubscriptionView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        pass
 
     def post(self, request, user_id):
         subscribe_user = get_object_or_404(User, id=user_id)
@@ -95,10 +108,21 @@ class SubscriptionView(views.APIView):
             'username': subscribe_user.username,
             'first_name': subscribe_user.first_name,
             'last_name': subscribe_user.last_name,
+            'is_subscribed': True,
             'recipes': recipes_serializer.data,
             'recipes_count': recipes_count
         }
         return Response(response_data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, user_id):
-        pass
+        subscribe_user = get_object_or_404(User, id=user_id)
+        try:
+            subscribe = Subscription.objects.get(
+                user=request.user,
+                subscribe=subscribe_user
+            )
+        except ObjectDoesNotExist:
+            error = {'errors': 'Вы не подписаны на этого пользователя'}
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        subscribe.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

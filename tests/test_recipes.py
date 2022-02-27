@@ -811,10 +811,10 @@ class TestFavorites:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_favorites_delete__not_auth(self, client, recipe_2):
+    def test_favorites_delete__not_auth(self, client, user_client, recipe_2):
         url = f'/api/recipes/{str(recipe_2.id)}/favorite/'
         code_expected = 401
-        client.post(
+        user_client.post(
             url,
             content_type='application/json'
         )
@@ -827,16 +827,16 @@ class TestFavorites:
         data_expected = {'detail': 'Учетные данные не были предоставлены.'}
 
         assert response.status_code == code_expected, (
-            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'Проверьте, что при DELETE запросе на `{url}` от анонимного '
             f'пользователя, возвращается статус {code_expected}'
         )
         assert Favorite.objects.count() == favorites_count, (
-            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'Проверьте, что при DELETE запросе на `{url}` от анонимного '
             f'пользователя, не создается объект модели `Favorite` в базе '
             f'данных'
         )
         assert response_data == data_expected, (
-            f'Убедитесь, что при POST запросе на `{url}` от анонимного '
+            f'Убедитесь, что при DELETE запросе на `{url}` от анонимного '
             f'пользователя, возвращается сообщение: {data_expected["detail"]}'
         )
 
@@ -868,6 +868,7 @@ class TestFavorites:
         response_data_before = response_before.json()
         response_data_after = response_after.json()
         response_data_double = response_double.json()
+        double_expected = {'errors': 'Этого рецепта нет в избранном'}
 
         assert (response_data_before['is_favorited']
                 != response_data_after['is_favorited']), (
@@ -878,8 +879,16 @@ class TestFavorites:
             f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
             f'пользователя, возвращается статус {code_expected}'
         )
+        assert response_double.status_code == 400, (
+            f'Проверьте, что при попытке удалить из избранного рецепт, '
+            f'который не был туда добавлен, возвращается статус 400'
+        )
         assert Favorite.objects.count() == favorites_count - 1, (
             f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
             f'пользователя, удаляется объект модели `Favorite` в базе '
             f'данных'
+        )
+        assert response_data_double == double_expected, (
+            f'Проверьте, что нельзя удалить рецепт из избранного, '
+            f'если он не был туда добавлен'
         )

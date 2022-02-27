@@ -393,6 +393,118 @@ class TestUsers:
 class TestSubscriptions:
 
     @pytest.mark.django_db(transaction=True)
+    def test_subscribe_users_list(self, user_client, user_2, another_user):
+        url = f'/api/users/subscriptions/'
+        code_expected = 200
+        user_client.post(
+            f'/api/users/{str(user_2.id)}/subscribe/',
+            content_type='application/json'
+        )
+        user_client.post(
+            f'/api/users/{str(another_user.id)}/subscribe/',
+            content_type='application/json'
+        )
+        response = user_client.get(
+            url,
+            content_type='application/json'
+        )
+        data = response.json()
+        print(data)
+        # response_data = data['results']
+        # test_user = response_data[0]
+        # data_expected = {
+        #     'email': user.email,
+        #     'id': user.id,
+        #     'username': user.username,
+        #     'first_name': user.first_name,
+        #     'last_name': user.last_name,
+        #     'is_subscribed': user.is_subscribed
+        # }
+
+        assert response.status_code == code_expected, (
+            f'Убедитесь, что при запросе на `{url}` возвращается код '
+            f'{code_expected}'
+        )
+        # assert len(response_data) == data['count'] == User.objects.count(), (
+        #     f'Проверьте, что при GET запросе на `{url}` '
+        #     f'возвращается весь список пользователей'
+        # )
+        # for field in data_expected.items():
+        #     assert field[0] in test_user.keys(), (
+        #         f'Проверьте, что добавили поле `{field[0]}` в список полей '
+        #         f'`fields` сериализатора модели User'
+        #     )
+        #     assert field[1] == test_user[field[0]], (
+        #         f'Убедитесь, что значение поля `{field[0]}` содержит '
+        #         f'корректные данные'
+        #     )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_subscribe_create__not_auth(self, client, another_user):
+        url = f'/api/users/{str(another_user.id)}/subscribe/'
+        code_expected = 401
+        subscriptions_count = Subscription.objects.count()
+        response = client.post(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Subscription.objects.count() == subscriptions_count, (
+            f'Проверьте, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, не создается объект модели `Subscription` '
+            f'в базе данных'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при POST запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_subscribe_create_delete__not_found(self, user_client):
+        code_expected = 404
+        url = f'/api/users/{code_expected}/subscribe/'
+        subscriptions_count = Subscription.objects.count()
+        response_create = user_client.post(
+            url,
+            content_type='application/json'
+        )
+        response_delete = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_data_create = response_create.json()
+        response_data_delete = response_delete.json()
+        data_expected = {'detail': 'Страница не найдена.'}
+
+        assert response_create.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{url}` на несуществующего '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert response_delete.status_code == code_expected, (
+            f'Проверьте, что при DELETE запросе на `{url}` на несуществующего '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Subscription.objects.count() == subscriptions_count, (
+            f'Проверьте, что при POST запросе на `{url}` на несуществующего '
+            f'пользователя, не создается объект модели `Subscription` '
+            f'в базе данных'
+        )
+        assert response_data_create == data_expected, (
+            f'Убедитесь, что при POST запросе на `{url}` на несуществующего '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+        assert response_data_delete == data_expected, (
+            f'Убедитесь, что при DELETE запросе на `{url}` на несуществующего '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
     def test_subscribe_create__auth_user(self, user_client, user, another_user,
                                          recipe, image):
         url = f'/api/users/{str(another_user.id)}/subscribe/'
@@ -427,6 +539,7 @@ class TestSubscriptions:
             'username': another_user.username,
             'first_name': another_user.first_name,
             'last_name': another_user.last_name,
+            'is_subscribed': True,
             'recipes_count': recipes_count_expected
         }
         recipes_expected = {
@@ -479,3 +592,86 @@ class TestSubscriptions:
                 f'Убедитесь, что значение поля `{field[0]}` после успешной '
                 f'подписки на пользователя, содержит корректные данные'
             )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_subscribe_delete__not_auth(self, client, user_client, user_2):
+        url = f'/api/users/{str(user_2.id)}/subscribe/'
+        code_expected = 401
+        user_client.post(
+            url,
+            content_type='application/json'
+        )
+        subscriptions_count = Subscription.objects.count()
+        response = client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при DELETE запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert Subscription.objects.count() == subscriptions_count, (
+            f'Проверьте, что при DELETE запросе на `{url}` от анонимного '
+            f'пользователя, не создается объект модели `Favorite` в базе '
+            f'данных'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при DELETE запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_subscribe_delete__auth_user(self, user_client, user_2):
+        url = f'/api/users/{str(user_2.id)}/subscribe/'
+        code_expected = 204
+        user_client.post(
+            url,
+            content_type='application/json'
+        )
+        favorites_count = Subscription.objects.count()
+        response_before = user_client.get(
+            f'/api/users/{str(user_2.id)}/',
+            content_type='application/json'
+        )
+        response = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_after = user_client.get(
+            f'/api/users/{str(user_2.id)}/',
+            content_type='application/json'
+        )
+        response_double = user_client.delete(
+            url,
+            content_type='application/json'
+        )
+        response_data_before = response_before.json()
+        response_data_after = response_after.json()
+        response_data_double = response_double.json()
+        double_expected = {'errors': 'Вы не подписаны на этого пользователя'}
+
+        assert (response_data_before['is_subscribed']
+                != response_data_after['is_subscribed']), (
+            f'Убедитесь, что значение поля `is_subscribed` до DELETE запроса '
+            f'отличается от значения этого поля после отписки'
+        )
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert response_double.status_code == 400, (
+            f'Проверьте, что при попытке отписаться от пользователя, '
+            f'на которого нет подписки, возвращается статус 400'
+        )
+        assert Subscription.objects.count() == favorites_count - 1, (
+            f'Проверьте, что при DELETE запросе на `{url}` от авторизованного '
+            f'пользователя, удаляется объект модели `Subscription` в базе '
+            f'данных'
+        )
+        assert response_data_double == double_expected, (
+            f'Проверьте, что нельзя отписаться от пользователя, на которого '
+            f'нет подписки'
+        )
