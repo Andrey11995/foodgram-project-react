@@ -1,9 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import (mixins, permissions, response, status, views,
-                            viewsets)
+from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .models import Subscription, User
@@ -70,10 +70,8 @@ class UserViewSet(CreateRetrieveListViewSet):
     def subscriptions(self, request, *args, **kwargs):
         subscribe_users = User.objects.filter(subscribing__user=request.user)
         serializer = self.get_serializer(subscribe_users, many=True)
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
+        page = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(page)
 
 
 class SubscriptionView(views.APIView):
@@ -85,7 +83,7 @@ class SubscriptionView(views.APIView):
             user=request.user,
             subscribe=subscribe_user
         ).exists()
-        if str(request.user.id) == user_id:
+        if request.user.id == int(user_id):
             error = {'errors': 'Невозможно подписаться на самого себя'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         elif double_subscribe:
@@ -95,24 +93,11 @@ class SubscriptionView(views.APIView):
             user=request.user,
             subscribe=subscribe_user
         )
-        recipes = Recipe.objects.filter(author=subscribe_user)
-        recipes_serializer = RecipeSubscribeSerializer(
-            recipes,
-            many=True,
-            read_only=True
+        serializer = SubscribeSerializer(
+            subscribe_user,
+            context={'request': request}
         )
-        recipes_count = Recipe.objects.filter(author=subscribe_user).count()
-        response_data = {
-            'email': subscribe_user.email,
-            'id': subscribe_user.id,
-            'username': subscribe_user.username,
-            'first_name': subscribe_user.first_name,
-            'last_name': subscribe_user.last_name,
-            'is_subscribed': True,
-            'recipes': recipes_serializer.data,
-            'recipes_count': recipes_count
-        }
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, user_id):
         subscribe_user = get_object_or_404(User, id=user_id)

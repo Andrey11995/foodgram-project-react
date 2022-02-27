@@ -1,4 +1,5 @@
 import pytest
+import re
 
 from recipes.models import Recipe
 from users.models import Subscription, User
@@ -393,7 +394,28 @@ class TestUsers:
 class TestSubscriptions:
 
     @pytest.mark.django_db(transaction=True)
-    def test_subscribe_users_list(self, user_client, user_2, another_user):
+    def test_subscribe_users_list__not_auth(self, client):
+        url = f'/api/users/subscriptions/'
+        code_expected = 401
+        response = client.get(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.json()
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при GET запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при GET запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: {data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_subscribe_users_list__auth_user(self, user_client, user, user_2,
+                                             another_user, recipe):
         url = f'/api/users/subscriptions/'
         code_expected = 200
         user_client.post(
@@ -409,35 +431,62 @@ class TestSubscriptions:
             content_type='application/json'
         )
         data = response.json()
-        print(data)
-        # response_data = data['results']
-        # test_user = response_data[0]
-        # data_expected = {
-        #     'email': user.email,
-        #     'id': user.id,
-        #     'username': user.username,
-        #     'first_name': user.first_name,
-        #     'last_name': user.last_name,
-        #     'is_subscribed': user.is_subscribed
-        # }
+        response_data = data['results']
+        test_user = response_data[0]
+        subscribe_users_count = User.objects.filter(
+            subscribing__user=user
+        ).count()
+        recipes_count = another_user.recipes.count()
+        image_expected = 'http://testserver/media/' + r'\w'
+        data_expected = {
+            'email': another_user.email,
+            'id': another_user.id,
+            'username': another_user.username,
+            'first_name': another_user.first_name,
+            'last_name': another_user.last_name,
+            'is_subscribed': True,
+            'recipes_count': recipes_count
+        }
+        recipes_expected = {
+            'id': recipe.id,
+            'name': recipe.name,
+            'cooking_time': recipe.cooking_time
+        }
 
         assert response.status_code == code_expected, (
             f'Убедитесь, что при запросе на `{url}` возвращается код '
             f'{code_expected}'
         )
-        # assert len(response_data) == data['count'] == User.objects.count(), (
-        #     f'Проверьте, что при GET запросе на `{url}` '
-        #     f'возвращается весь список пользователей'
-        # )
-        # for field in data_expected.items():
-        #     assert field[0] in test_user.keys(), (
-        #         f'Проверьте, что добавили поле `{field[0]}` в список полей '
-        #         f'`fields` сериализатора модели User'
-        #     )
-        #     assert field[1] == test_user[field[0]], (
-        #         f'Убедитесь, что значение поля `{field[0]}` содержит '
-        #         f'корректные данные'
-        #     )
+        assert len(response_data) == data['count'] == subscribe_users_count, (
+            f'Проверьте, что при GET запросе на `{url}` '
+            f'возвращается весь список пользователей'
+        )
+        assert 'image' in test_user['recipes'][0], (
+            f'Убедитесь, что поле `image` в поле `recipes` присутствует '
+            f'в выдаче'
+        )
+        assert re.match(image_expected, test_user['recipes'][0]['image']), (
+            f'Убедитесь, что поле `image` в поле `recipes` содержит '
+            f'корректные данные'
+        )
+        for field in recipes_expected.items():
+            assert field[0] in test_user['recipes'][0], (
+                f'Убедитесь, что при GET запросе на `{url}`, поле '
+                f'`{field[0]}` присутствует в поле `recipes`'
+            )
+            assert field[1] == test_user['recipes'][0][field[0]], (
+                f'Убедитесь, что при GET запросе на `{url}`, значение поля '
+                f'`{field[0]}` в поле `recipes` содержит корректные данные'
+            )
+        for field in data_expected.items():
+            assert field[0] in test_user.keys(), (
+                f'Убедитесь, что при GET запросе на `{url}`, поле '
+                f'`{field[0]}` присутствует в выдаче'
+            )
+            assert field[1] == test_user[field[0]], (
+                f'Убедитесь, что при GET запросе на `{url}`, значение поля '
+                f'`{field[0]}` содержит корректные данные'
+            )
 
     @pytest.mark.django_db(transaction=True)
     def test_subscribe_create__not_auth(self, client, another_user):
@@ -533,6 +582,7 @@ class TestSubscriptions:
         recipes_count_expected = Recipe.objects.filter(
             author=another_user
         ).count()
+        image_expected = 'http://testserver/media/' + r'\w'
         data_expected = {
             'email': another_user.email,
             'id': another_user.id,
@@ -545,7 +595,6 @@ class TestSubscriptions:
         recipes_expected = {
             'id': recipe.id,
             'name': recipe.name,
-            'image': recipe.image.url,
             'cooking_time': recipe.cooking_time
         }
         double_expected = {'errors': 'Вы уже подписаны на этого пользователя'}
@@ -572,6 +621,15 @@ class TestSubscriptions:
         assert response_data_check['is_subscribed'] is True, (
             f'Убедитесь, что после подписки на пользователя, поле '
             f'`is_subscribed` этого пользователя имеет значение `True`'
+        )
+        assert 'image' in response_data['recipes'][0], (
+            f'Убедитесь, что поле `image` в поле `recipes` присутствует '
+            f'в выдаче'
+        )
+        assert re.match(image_expected,
+                        response_data['recipes'][0]['image']), (
+            f'Убедитесь, что поле `image` в поле `recipes` содержит '
+            f'корректные данные'
         )
         for field in recipes_expected.items():
             assert field[0] in response_data['recipes'][0], (
