@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.response import Response
 
-from recipes.models import Favorite, Ingredient, Recipe, Tag
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.serializers import RecipePartialSerializer
 
 from .permissions import IsAuthOwnerOrReadOnly
@@ -50,28 +50,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 
-class FavoriteView(views.APIView):
+class FavoriteShoppingCartView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
+    queryset = {
+        'favorite': Favorite.objects,
+        'shopping_cart': ShoppingCart.objects
+    }
 
     def post(self, request, recipe_id):
+        name_url = request.resolver_match.url_name
         recipe = get_object_or_404(Recipe, id=recipe_id)
-        double_favorite = Favorite.objects.filter(
+        double = self.queryset[name_url].filter(
             user=request.user,
             recipe=recipe
         ).exists()
-        if double_favorite:
-            error = {'errors': 'Рецепт уже добавлен в избранное'}
+        if double:
+            error = {'errors': 'Рецепт уже добавлен'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        Favorite.objects.create(user=request.user, recipe=recipe)
+        self.queryset[name_url].create(user=request.user, recipe=recipe)
         serializer = RecipePartialSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, recipe_id):
+        name_url = request.resolver_match.url_name
         recipe = get_object_or_404(Recipe, id=recipe_id)
         try:
-            favorite = Favorite.objects.get(user=request.user, recipe=recipe)
+            obj = self.queryset[name_url].get(user=request.user, recipe=recipe)
         except ObjectDoesNotExist:
-            error = {'errors': 'Этого рецепта нет в избранном'}
+            error = {'errors': 'Рецепт не найден в списке'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        favorite.delete()
+        obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
