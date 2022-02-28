@@ -1,9 +1,8 @@
 import re
 
 from django.contrib.auth import password_validation as pass_val
-from rest_framework import serializers
-
 from recipes.serializers import RecipePartialSerializer
+from rest_framework import serializers
 
 from .models import Subscription, User
 

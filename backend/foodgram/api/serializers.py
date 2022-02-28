@@ -5,10 +5,9 @@ import uuid
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-
 from recipes.models import (Amount, Favorite, Ingredient, Recipe, ShoppingCart,
                             Tag)
+from rest_framework import serializers
 from users.serializers import UserSerializer
 
 

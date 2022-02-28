@@ -1,6 +1,5 @@
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from users.models import User
 
 
@@ -17,7 +16,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name
 
 
 class Amount(models.Model):
@@ -35,6 +34,9 @@ class Amount(models.Model):
     class Meta:
         verbose_name = 'Количество'
         verbose_name_plural = 'Количество'
+
+    def __str__(self):
+        return f'{self.ingredient.name} - {self.amount}'
 
 
 class Tag(models.Model):

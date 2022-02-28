@@ -919,3 +919,60 @@ class TestFavoritesAndShoppingCart:
                 f'Проверьте, что нельзя удалить рецепт из списка, '
                 f'если он не был в него добавлен'
             )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_download_shop_cart__auth_user(self, user_client, ingredient,
+                                           ingredient_2, tag, tag_2, image):
+        url = '/api/recipes/download_shopping_cart/'
+        amount_1 = 2.5
+        amount_2 = 10
+        valid_ingredients_data = [
+            {
+                'id': ingredient.id,
+                'amount': amount_1
+            },
+            {
+                'id': ingredient_2.id,
+                'amount': amount_2
+            }
+        ]
+        valid_data = {
+            'ingredients': valid_ingredients_data,
+            'tags': [tag.id, tag_2.id],
+            'image': image,
+            'name': 'Рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+        valid_data_2 = {
+            'ingredients': valid_ingredients_data,
+            'tags': [tag.id],
+            'image': image,
+            'name': 'Рецепт 2',
+            'text': 'Описание рецепта 2',
+            'cooking_time': 10
+        }
+        create = user_client.post(
+            f'/api/recipes/',
+            data=json.dumps(valid_data),
+            content_type='application/json'
+        )
+        create_2 = user_client.post(
+            f'/api/recipes/',
+            data=json.dumps(valid_data_2),
+            content_type='application/json'
+        )
+        user_client.post(
+            f'/api/recipes/{str(create.json()["id"])}/shopping_cart/',
+            content_type='application/json'
+        )
+        user_client.post(
+            f'/api/recipes/{str(create_2.json()["id"])}/shopping_cart/',
+            content_type='application/json'
+        )
+        response = user_client.get(
+            url,
+            content_type='application/json'
+        )
+        response_data = response.status_code
+        print(response_data)
