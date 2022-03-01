@@ -921,58 +921,46 @@ class TestFavoritesAndShoppingCart:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_download_shop_cart__auth_user(self, user_client, ingredient,
-                                           ingredient_2, tag, tag_2, image):
+    def test_download_shop_cart__not_auth(self, client):
         url = '/api/recipes/download_shopping_cart/'
-        amount_1 = 2.5
-        amount_2 = 10
-        valid_ingredients_data = [
-            {
-                'id': ingredient.id,
-                'amount': amount_1
-            },
-            {
-                'id': ingredient_2.id,
-                'amount': amount_2
-            }
-        ]
-        valid_data = {
-            'ingredients': valid_ingredients_data,
-            'tags': [tag.id, tag_2.id],
-            'image': image,
-            'name': 'Рецепт',
-            'text': 'Описание рецепта',
-            'cooking_time': 30
-        }
-        valid_data_2 = {
-            'ingredients': valid_ingredients_data,
-            'tags': [tag.id],
-            'image': image,
-            'name': 'Рецепт 2',
-            'text': 'Описание рецепта 2',
-            'cooking_time': 10
-        }
-        create = user_client.post(
-            f'/api/recipes/',
-            data=json.dumps(valid_data),
+        code_expected = 401
+        response = client.get(
+            url,
             content_type='application/json'
         )
-        create_2 = user_client.post(
-            f'/api/recipes/',
-            data=json.dumps(valid_data_2),
+        response_data = response.json()
+        data_expected = {'detail': 'Учетные данные не были предоставлены.'}
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при GET запросе на `{url}` от анонимного '
+            f'пользователя, возвращается статус {code_expected}'
+        )
+        assert response_data == data_expected, (
+            f'Убедитесь, что при GET запросе на `{url}` от анонимного '
+            f'пользователя, возвращается сообщение: '
+            f'{data_expected["detail"]}'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_download_shop_cart__auth_user(self, user_client, recipe,
+                                           recipe_2):
+        url = '/api/recipes/download_shopping_cart/'
+        code_expected = 200
+        user_client.post(
+            f'/api/recipes/{str(recipe.id)}/shopping_cart/',
             content_type='application/json'
         )
         user_client.post(
-            f'/api/recipes/{str(create.json()["id"])}/shopping_cart/',
-            content_type='application/json'
-        )
-        user_client.post(
-            f'/api/recipes/{str(create_2.json()["id"])}/shopping_cart/',
+            f'/api/recipes/{str(recipe_2.id)}/shopping_cart/',
             content_type='application/json'
         )
         response = user_client.get(
             url,
             content_type='application/json'
         )
-        response_data = response.status_code
-        print(response_data)
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при GET запросе на `{url}` от '
+            f'авторизованного пользователя, возвращается статус '
+            f'{code_expected}'
+        )

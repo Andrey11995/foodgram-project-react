@@ -1,8 +1,13 @@
+import itertools
+
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.serializers import RecipePartialSerializer
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen.canvas import Canvas
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -60,14 +65,22 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if not user_recipes:
             error = {'errors': 'Список рецептов пуст'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
-        text = self._get_shopping_cart(user_recipes)
-        with open('shopping_cart.txt', 'w') as shopping_cart:
-            shopping_cart.write(text)
-        with open('shopping_cart.txt', 'r') as shopping_cart:
-            response = HttpResponse(
-                shopping_cart.read(),
-                content_type='text/plain,charset=utf8')
-        response['Content-Disposition'] = 'attachment; filename="shopping_cart.txt"'
+        ingredients = self._get_shopping_cart(user_recipes)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="shopping_cart.pdf"')
+        canvas = Canvas(response)
+        pdfmetrics.registerFont(TTFont('FontPDF', 'FontPDF.otf'))
+        canvas.setFont('FontPDF', 50)
+        canvas.drawString(100, 750, 'Список покупок:')
+        canvas.setFont('FontPDF', 30)
+        counter = itertools.count(650, -50)
+        for k, v in ingredients.items():
+            if int(round(v, 2) % 1 * 100) == 0:
+                v = int(v)
+            height = next(counter)
+            canvas.drawString(50, height, f'-  {k} - {v}')
+        canvas.save()
         return response
 
     def _get_shopping_cart(self, recipes):
@@ -83,8 +96,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                     ingredients_dict[key] = amount
                 else:
                     ingredients_dict[key] += amount
-        return ('Список покупок:\n\n'
-                + '\n'.join(f'{k} - {v}' for k, v in ingredients_dict.items()))
+        return ingredients_dict
 
 
 class FavoriteShoppingCartView(views.APIView):
