@@ -1,6 +1,7 @@
 """Django settings for Foodgram project."""
 
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -78,13 +79,19 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'foodgram'),
+        'NAME': os.getenv('DB_NAME', 'postgres'),
         'USER': os.getenv('POSTGRES_USER', 'postgres'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'PostgresPassword'),
         'HOST': os.getenv('DB_HOST', 'db'),
         'PORT': os.getenv('DB_PORT', '5432')
     }
 }
+
+if sys.argv[0].split('\\')[-1] == 'pytest':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
 
 AUTH_USER_MODEL = 'users.User'
 
