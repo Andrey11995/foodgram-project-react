@@ -3,12 +3,14 @@ import itertools
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from recipes.serializers import RecipePartialSerializer
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
-from rest_framework import mixins, permissions, status, views, viewsets
+from rest_framework import (filters, mixins, permissions, status, views,
+                            viewsets)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -33,6 +35,9 @@ class IngredientsViewSet(RetrieveListViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     permission_classes = [permissions.AllowAny]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filterset_fields = ('name',)
+    search_fields = ('^name',)
     pagination_class = None
 
 
