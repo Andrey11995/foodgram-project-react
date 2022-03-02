@@ -6,10 +6,10 @@ services:
     volumes:
       - /var/lib/postgresql/data/
     env_file:
-      - ../.env
+      - ./.env
 
   backend:
-    image: andrey11995/foodgram:latest
+    image: andrey11995/foodgram-project:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -17,7 +17,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ../.env
+      - ./.env
 
   frontend:
     build:
