@@ -940,27 +940,3 @@ class TestFavoritesAndShoppingCart:
             f'пользователя, возвращается сообщение: '
             f'{data_expected["detail"]}'
         )
-
-    @pytest.mark.django_db(transaction=True)
-    def test_download_shop_cart__auth_user(self, user_client, recipe,
-                                           recipe_2):
-        url = '/api/recipes/download_shopping_cart/'
-        code_expected = 200
-        user_client.post(
-            f'/api/recipes/{str(recipe.id)}/shopping_cart/',
-            content_type='application/json'
-        )
-        user_client.post(
-            f'/api/recipes/{str(recipe_2.id)}/shopping_cart/',
-            content_type='application/json'
-        )
-        response = user_client.get(
-            url,
-            content_type='application/json'
-        )
-
-        assert response.status_code == code_expected, (
-            f'Проверьте, что при GET запросе на `{url}` от '
-            f'авторизованного пользователя, возвращается статус '
-            f'{code_expected}'
-        )
