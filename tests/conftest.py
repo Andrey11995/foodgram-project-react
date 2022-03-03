@@ -14,7 +14,7 @@ def auto_session_resource(request):
 
     def auto_session_resource_teardown():
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        path = f'{root_dir}/backend/foodgram/media/recipes/'
+        path = f'{root_dir}/backend/media/recipes/'
         finish = time.time()
         files = os.listdir(os.path.join(path))
         for file in files:
