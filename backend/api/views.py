@@ -9,11 +9,11 @@ from recipes.serializers import RecipePartialSerializer
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
-from rest_framework import (filters, mixins, permissions, status, views,
-                            viewsets)
+from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .filters import IngredientsFilter
 from .permissions import IsAuthOwnerOrReadOnly
 from .serializers import (IngredientsSerializer, RecipesCreateSerializer,
                           RecipesSerializer, TagsSerializer)
@@ -35,9 +35,8 @@ class IngredientsViewSet(RetrieveListViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    filterset_fields = ('name',)
-    search_fields = ('^name',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientsFilter
     pagination_class = None
 
 
