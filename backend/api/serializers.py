@@ -1,5 +1,4 @@
 import base64
-import imghdr
 import uuid
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,32 +14,13 @@ class Base64ImageField(serializers.ImageField):
 
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
-            formatt, imgstr = data.split(';base64,')
-            ext = formatt.split('/')[-1]
-            idd = uuid.uuid4()
-            data = ContentFile(base64.b64decode(imgstr), name=idd.urn[9:] + '.' + ext)
+            img_format, img_str = data.split(';base64,')
+            ext = img_format.split('/')[-1]
+            data = ContentFile(
+                base64.b64decode(img_str),
+                name=f'{uuid.uuid4().urn[9:]}.{ext}'
+            )
         return super(Base64ImageField, self).to_internal_value(data)
-
-    # def to_internal_value(self, data):
-    #     import six
-    #     if isinstance(data, six.string_types):
-    #         if 'data:' in data and ';base64,' in data:
-    #             header, data = data.split(';base64,')
-    #         try:
-    #             decoded_file = base64.b64decode(data)
-    #         except TypeError:
-    #             self.fail('invalid_image')
-    #         file_name = str(uuid.uuid4())[:12]
-    #         file_extension = self.get_file_extension(file_name, decoded_file)
-    #         complete_file_name = "%s.%s" % (file_name, file_extension,)
-    #         data = ContentFile(decoded_file, name=complete_file_name)
-    #     return super(Base64ImageField, self).to_internal_value(data)
-    #
-    # def get_file_extension(self, file_name, decoded_file):
-    #     import imghdr
-    #     extension = imghdr.what(file_name, decoded_file)
-    #     extension = "jpg" if extension == "jpeg" else extension
-    #     return extension
 
 
 class TagListField(serializers.RelatedField):
@@ -147,7 +127,8 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
+        image = validated_data.pop('image')
+        recipe = Recipe.objects.create(**validated_data, image=image)
         amounts = []
         for ingredient in ingredients:
             amount, status = Amount.objects.get_or_create(**ingredient)

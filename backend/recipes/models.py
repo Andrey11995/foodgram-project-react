@@ -90,7 +90,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=150, verbose_name='Название')
     image = models.ImageField(
         'Картинка',
-        upload_to='recipes/',
+        upload_to='recipes/'
     )
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(

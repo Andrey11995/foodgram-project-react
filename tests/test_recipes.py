@@ -280,191 +280,192 @@ class TestRecipes:
             f'без данных, рецепт не изменяется'
         )
 
-    # @pytest.mark.django_db(transaction=True)
-    # def test_recipes_create__invalid_request_data(self, user_client):
-    #     recipes_count = Recipe.objects.count()
-    #     code_expected = 400
-    #     invalid_id = 404
-    #     invalid_ingredients_data = [
-    #         {
-    #             'id': invalid_id,
-    #             'amount': 0
-    #         }
-    #     ]
-    #     invalid_data = {
-    #         'ingredients': invalid_ingredients_data,
-    #         'tags': [invalid_id, 4546],
-    #         'image': 'invalid_image',
-    #         'name': 'рецепт',
-    #         'text': 'Описание',
-    #         'cooking_time': 0
-    #     }
-    #     response = user_client.post(
-    #         self.url,
-    #         data=json.dumps(invalid_data),
-    #         content_type='application/json'
-    #     )
-    #     response_data = response.json()
-    #     id_expected = [f'Недопустимый первичный ключ "{invalid_id}" - объект '
-    #                    f'не существует.']
-    #     ingredients_expected = [
-    #         {
-    #             'id': id_expected,
-    #             'amount': ['Убедитесь, что это значение больше либо равно 1.']
-    #         }
-    #     ]
-    #     data_expected = {
-    #         'ingredients': ingredients_expected,
-    #         'tags': id_expected,
-    #         'image': ['Загрузите правильное изображение. Файл, который вы '
-    #                   'загрузили, поврежден или не является изображением.'],
-    #         'name': ['Название должно начинаться с заглавной буквы!'],
-    #         'text': ['Описание должно содержать от 10 символов!'],
-    #         'cooking_time': ['Убедитесь, что это значение больше либо '
-    #                          'равно 1.']
-    #     }
-    #
-    #     assert response.status_code == code_expected, (
-    #         f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
-    #         f'данными, возвращается статус {code_expected}'
-    #     )
-    #     assert Recipe.objects.count() == recipes_count, (
-    #         f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
-    #         f'данными не создается новый рецепт'
-    #     )
-    #     for field in data_expected.items():
-    #         assert field[0] in response_data.keys(), (
-    #             f'Убедитесь, что поле `{field[0]}` проверяется на валидность'
-    #         )
-    #         assert field[1] == response_data[field[0]], (
-    #             f'Убедитесь, что поле `{field[0]}` после POST запроса '
-    #             f'с невалидными данными выдает соответствующую ошибку'
-    #         )
-    #
-    # @pytest.mark.django_db(transaction=True)
-    # def test_recipes_create__valid_request_data(self, user_client, user, tag,
-    #                                             tag_2, image, ingredient,
-    #                                             ingredient_2):
-    #     recipes_count = Recipe.objects.count()
-    #     code_expected = 201
-    #     amount_1 = 2.5
-    #     amount_2 = 10
-    #     valid_ingredients_data = [
-    #         {
-    #             'id': ingredient.id,
-    #             'amount': amount_1
-    #         },
-    #         {
-    #             'id': ingredient_2.id,
-    #             'amount': amount_2
-    #         }
-    #     ]
-    #     valid_data = {
-    #         'ingredients': valid_ingredients_data,
-    #         'tags': [tag.id, tag_2.id],
-    #         'image': image,
-    #         'name': 'Рецепт',
-    #         'text': 'Описание рецепта',
-    #         'cooking_time': 30
-    #     }
-    #
-    #     author_expected = {
-    #         'email': user.email,
-    #         'id': user.id,
-    #         'username': user.username,
-    #         'first_name': user.first_name,
-    #         'last_name': user.last_name,
-    #         'is_subscribed': user.is_subscribed
-    #     }
-    #     tags_expected = [
-    #         {
-    #             'id': tag.id,
-    #             'name': tag.name,
-    #             'color': tag.color,
-    #             'slug': tag.slug
-    #         },
-    #         {
-    #             'id': tag_2.id,
-    #             'name': tag_2.name,
-    #             'color': tag_2.color,
-    #             'slug': tag_2.slug
-    #         },
-    #     ]
-    #     ingredients_expected = [
-    #         {
-    #             'id': ingredient.id,
-    #             'name': ingredient.name,
-    #             'measurement_unit': ingredient.measurement_unit,
-    #             'amount': amount_1
-    #         },
-    #         {
-    #             'id': ingredient_2.id,
-    #             'name': ingredient_2.name,
-    #             'measurement_unit': ingredient_2.measurement_unit,
-    #             'amount': amount_2
-    #         }
-    #     ]
-    #     image_expected = 'http://testserver/media/recipes/' + r'\w'
-    #     data_expected = {
-    #         'is_favorited': False,
-    #         'is_in_shopping_cart': False,
-    #         'name': 'Рецепт',
-    #         'text': 'Описание рецепта',
-    #         'cooking_time': 30
-    #     }
-    #     response = user_client.post(
-    #         self.url,
-    #         data=json.dumps(valid_data),
-    #         content_type='application/json'
-    #     )
-    #     response_data = response.json()
-    #     print(response_data)
-    #
-    #     assert response.status_code == code_expected, (
-    #         f'Проверьте, что при POST запросе на `{self.url}` с валидными '
-    #         f'данными, возвращается статус {code_expected}'
-    #     )
-    #     assert Recipe.objects.count() == recipes_count + 1, (
-    #         f'Проверьте, что при POST запросе на `{self.url}` с валидными '
-    #         f'данными создается новый рецепт'
-    #     )
-    #     for field in self.fields_create_update:
-    #         assert field in response_data.keys(), (
-    #             f'Убедитесь, что поле `{field}` присутствует в выдаче '
-    #             f'после успешного создания рецепта'
-    #         )
-    #     assert re.match(image_expected, response_data['image']), (
-    #         f'Убедитесь, что поле `image` содержит корректные данные'
-    #     )
-    #     for field in data_expected.items():
-    #         assert field[1] == response_data[field[0]], (
-    #             f'Убедитесь, что поле `{field[0]}` содержит корректные данные'
-    #         )
-    #     for field in author_expected.items():
-    #         assert field[0] in response_data['author'].keys(), (
-    #             f'Убедитесь, что поле `{field[0]}` присутствует в поле '
-    #             f'`author` после успешного создания рецепта'
-    #         )
-    #         assert field[1] == response_data['author'][field[0]], (
-    #             f'Убедитесь, что поле `{field[0]}` в поле `author` '
-    #             f'содержит корректные данные'
-    #         )
-    #     ingredients_tags_expected = {
-    #         'ingredients': ingredients_expected,
-    #         'tags': tags_expected
-    #     }
-    #     for checked, expected in ingredients_tags_expected.items():
-    #         for i in range(len(expected)):
-    #             for field in expected[i].items():
-    #                 assert field[0] in response_data[checked][i].keys(), (
-    #                     f'Убедитесь, что поле `{field[0]}` присутствует '
-    #                     f'в поле `{checked}` после успешного создания '
-    #                     f'рецепта'
-    #                 )
-    #                 assert field[1] == response_data[checked][i][field[0]], (
-    #                     f'Убедитесь, что значение поля `{field[0]}` в поле '
-    #                     f'`{checked}` содержит корректные данные'
-    #                 )
+    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__invalid_request_data(self, user_client):
+        recipes_count = Recipe.objects.count()
+        code_expected = 400
+        invalid_id = 404
+        invalid_ingredients_data = [
+            {
+                'id': invalid_id,
+                'amount': 0
+            }
+        ]
+        invalid_data = {
+            'ingredients': invalid_ingredients_data,
+            'tags': [invalid_id, 4546],
+            'image': 'invalid_image',
+            'name': 'рецепт',
+            'text': 'Описание',
+            'cooking_time': 0
+        }
+        response = user_client.post(
+            self.url,
+            data=json.dumps(invalid_data),
+            content_type='application/json'
+        )
+        response_data = response.json()
+        id_expected = [f'Недопустимый первичный ключ "{invalid_id}" - объект '
+                       f'не существует.']
+        ingredients_expected = [
+            {
+                'id': id_expected,
+                'amount': ['Убедитесь, что это значение больше либо равно 1.']
+            }
+        ]
+        data_expected = {
+            'ingredients': ingredients_expected,
+            'tags': id_expected,
+            'image': ['Загрузите правильное изображение. Файл, который вы '
+                      'загрузили, поврежден или не является изображением.'],
+            'name': ['Название должно начинаться с заглавной буквы!'],
+            'text': ['Описание должно содержать от 10 символов!'],
+            'cooking_time': ['Убедитесь, что это значение больше либо '
+                             'равно 1.']
+        }
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
+            f'данными, возвращается статус {code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count, (
+            f'Проверьте, что при POST запросе на `{self.url}` с невалидными '
+            f'данными не создается новый рецепт'
+        )
+        for field in data_expected.items():
+            assert field[0] in response_data.keys(), (
+                f'Убедитесь, что поле `{field[0]}` проверяется на валидность'
+            )
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что поле `{field[0]}` после POST запроса '
+                f'с невалидными данными выдает соответствующую ошибку'
+            )
+
+    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_create__valid_request_data(self, user_client, user, tag,
+                                                tag_2, image, ingredient,
+                                                ingredient_2):
+        recipes_count = Recipe.objects.count()
+        code_expected = 201
+        amount_1 = 2.5
+        amount_2 = 10
+        valid_ingredients_data = [
+            {
+                'id': ingredient.id,
+                'amount': amount_1
+            },
+            {
+                'id': ingredient_2.id,
+                'amount': amount_2
+            }
+        ]
+        valid_data = {
+            'ingredients': valid_ingredients_data,
+            'tags': [tag.id, tag_2.id],
+            'image': image,
+            'name': 'Рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+
+        author_expected = {
+            'email': user.email,
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_subscribed': user.is_subscribed
+        }
+        tags_expected = [
+            {
+                'id': tag.id,
+                'name': tag.name,
+                'color': tag.color,
+                'slug': tag.slug
+            },
+            {
+                'id': tag_2.id,
+                'name': tag_2.name,
+                'color': tag_2.color,
+                'slug': tag_2.slug
+            },
+        ]
+        ingredients_expected = [
+            {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.measurement_unit,
+                'amount': amount_1
+            },
+            {
+                'id': ingredient_2.id,
+                'name': ingredient_2.name,
+                'measurement_unit': ingredient_2.measurement_unit,
+                'amount': amount_2
+            }
+        ]
+        image_expected = 'http://testserver/media/recipes/' + r'\w'
+        data_expected = {
+            'is_favorited': False,
+            'is_in_shopping_cart': False,
+            'name': 'Рецепт',
+            'text': 'Описание рецепта',
+            'cooking_time': 30
+        }
+        response = user_client.post(
+            self.url,
+            data=json.dumps(valid_data),
+            content_type='application/json'
+        )
+        response_data = response.json()
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при POST запросе на `{self.url}` с валидными '
+            f'данными, возвращается статус {code_expected}'
+        )
+        assert Recipe.objects.count() == recipes_count + 1, (
+            f'Проверьте, что при POST запросе на `{self.url}` с валидными '
+            f'данными создается новый рецепт'
+        )
+        for field in self.fields_create_update:
+            assert field in response_data.keys(), (
+                f'Убедитесь, что поле `{field}` присутствует в выдаче '
+                f'после успешного создания рецепта'
+            )
+        assert re.match(image_expected, response_data['image']), (
+            f'Убедитесь, что поле `image` содержит корректные данные'
+        )
+        for field in data_expected.items():
+            assert field[1] == response_data[field[0]], (
+                f'Убедитесь, что поле `{field[0]}` содержит корректные данные'
+            )
+        for field in author_expected.items():
+            assert field[0] in response_data['author'].keys(), (
+                f'Убедитесь, что поле `{field[0]}` присутствует в поле '
+                f'`author` после успешного создания рецепта'
+            )
+            assert field[1] == response_data['author'][field[0]], (
+                f'Убедитесь, что поле `{field[0]}` в поле `author` '
+                f'содержит корректные данные'
+            )
+        ingredients_tags_expected = {
+            'ingredients': ingredients_expected,
+            'tags': tags_expected
+        }
+        for checked, expected in ingredients_tags_expected.items():
+            for i in range(len(expected)):
+                for field in expected[i].items():
+                    assert field[0] in response_data[checked][i].keys(), (
+                        f'Убедитесь, что поле `{field[0]}` присутствует '
+                        f'в поле `{checked}` после успешного создания '
+                        f'рецепта'
+                    )
+                    assert field[1] == response_data[checked][i][field[0]], (
+                        f'Убедитесь, что значение поля `{field[0]}` в поле '
+                        f'`{checked}` содержит корректные данные'
+                    )
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_update_delete__not_auth(self, client, recipe_2, tag_2,
@@ -586,122 +587,123 @@ class TestRecipes:
             f'рецепт не удаляется'
         )
 
-    # @pytest.mark.django_db(transaction=True)
-    # def test_recipes_update__valid_request_data(self, user_client, user, tag,
-    #                                             tag_2, image, ingredient,
-    #                                             ingredient_2, amount, amount_2,
-    #                                             recipe_2):
-    #     url = f'{self.url}{str(recipe_2.id)}/'
-    #     code_expected = 200
-    #     valid_ingredients_data = [
-    #         {
-    #             'id': ingredient.id,
-    #             'amount': amount.amount
-    #         },
-    #         {
-    #             'id': ingredient_2.id,
-    #             'amount': amount_2.amount
-    #         }
-    #     ]
-    #     valid_data = {
-    #         'ingredients': valid_ingredients_data,
-    #         'tags': [tag.id, tag_2.id],
-    #         'image': image,
-    #         'name': 'Измененное название рецепта',
-    #         'text': 'Измененное описание рецепта',
-    #         'cooking_time': 30
-    #     }
-    #
-    #     tags_expected = [
-    #         {
-    #             'id': tag.id,
-    #             'name': tag.name,
-    #             'color': tag.color,
-    #             'slug': tag.slug
-    #         },
-    #         {
-    #             'id': tag_2.id,
-    #             'name': tag_2.name,
-    #             'color': tag_2.color,
-    #             'slug': tag_2.slug
-    #         },
-    #     ]
-    #     ingredients_expected = [
-    #         {
-    #             'id': ingredient.id,
-    #             'name': ingredient.name,
-    #             'measurement_unit': ingredient.measurement_unit,
-    #             'amount': amount.amount
-    #         },
-    #         {
-    #             'id': ingredient_2.id,
-    #             'name': ingredient_2.name,
-    #             'measurement_unit': ingredient_2.measurement_unit,
-    #             'amount': amount_2.amount
-    #         }
-    #     ]
-    #     image_expected = 'http://testserver/media/' + r'\w'
-    #     data_expected = {
-    #         'is_favorited': False,
-    #         'is_in_shopping_cart': False,
-    #         'name': 'Измененное название рецепта',
-    #         'text': 'Измененное описание рецепта',
-    #         'cooking_time': 30
-    #     }
-    #     response = user_client.put(
-    #         url,
-    #         data=json.dumps(valid_data),
-    #         content_type='application/json'
-    #     )
-    #     response_data = response.json()
-    #     response_changed = user_client.get(
-    #         url,
-    #         content_type='application/json'
-    #     )
-    #     response_data_changed = response_changed.json()
-    #
-    #     assert response.status_code == code_expected, (
-    #         f'Проверьте, что при PUT запросе на `{url}` с валидными '
-    #         f'данными, возвращается статус {code_expected}'
-    #     )
-    #     for field in self.fields_create_update:
-    #         assert field in response_data.keys(), (
-    #             f'Убедитесь, что поле `{field}` присутствует в выдаче '
-    #             f'после успешного изменения рецепта'
-    #         )
-    #     assert re.match(image_expected, response_data['image']), (
-    #         f'Убедитесь, что поле `image` содержит корректные данные'
-    #     )
-    #     assert response_data['image'] == response_data_changed['image'], (
-    #         f'Проверьте, что поле `image` успешно изменилось'
-    #     )
-    #     for field in data_expected.items():
-    #         assert (field[1]
-    #                 == response_data[field[0]]
-    #                 == response_data_changed[field[0]]), (
-    #             f'Убедитесь, что поле `{field[0]}` содержит корректные данные '
-    #             f' и изменилось в базе данных'
-    #         )
-    #     assert response_data['author'] == response_data_changed['author'], (
-    #         f'Убедитесь, что поле `author` не изменилось, после изменения '
-    #         f'рецепта'
-    #     )
-    #     ingredients_tags_expected = {
-    #         'ingredients': ingredients_expected,
-    #         'tags': tags_expected
-    #     }
-    #     for checked, expected in ingredients_tags_expected.items():
-    #         for i in range(len(expected)):
-    #             for field in expected[i].items():
-    #                 assert field[0] in response_data[checked][i].keys(), (
-    #                     f'Убедитесь, что поле `{field[0]}` присутствует '
-    #                     f'в поле `{checked}` после успешного изменения '
-    #                     f'рецепта'
-    #                 )
-    #                 assert field[1] == response_data[checked][i][field[0]], (
-    #                     f'Убедитесь, что значение поля `{field[0]}` в поле '
-    #                     f'`{checked}` содержит корректные данные'
-    #                 )
+    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_update__valid_request_data(self, user_client, user, tag,
+                                                tag_2, image, ingredient,
+                                                ingredient_2, amount, amount_2,
+                                                recipe_2):
+        url = f'{self.url}{str(recipe_2.id)}/'
+        code_expected = 200
+        valid_ingredients_data = [
+            {
+                'id': ingredient.id,
+                'amount': amount.amount
+            },
+            {
+                'id': ingredient_2.id,
+                'amount': amount_2.amount
+            }
+        ]
+        valid_data = {
+            'ingredients': valid_ingredients_data,
+            'tags': [tag.id, tag_2.id],
+            'image': image,
+            'name': 'Измененное название рецепта',
+            'text': 'Измененное описание рецепта',
+            'cooking_time': 30
+        }
+
+        tags_expected = [
+            {
+                'id': tag.id,
+                'name': tag.name,
+                'color': tag.color,
+                'slug': tag.slug
+            },
+            {
+                'id': tag_2.id,
+                'name': tag_2.name,
+                'color': tag_2.color,
+                'slug': tag_2.slug
+            },
+        ]
+        ingredients_expected = [
+            {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.measurement_unit,
+                'amount': amount.amount
+            },
+            {
+                'id': ingredient_2.id,
+                'name': ingredient_2.name,
+                'measurement_unit': ingredient_2.measurement_unit,
+                'amount': amount_2.amount
+            }
+        ]
+        image_expected = 'http://testserver/media/' + r'\w'
+        data_expected = {
+            'is_favorited': False,
+            'is_in_shopping_cart': False,
+            'name': 'Измененное название рецепта',
+            'text': 'Измененное описание рецепта',
+            'cooking_time': 30
+        }
+        response = user_client.put(
+            url,
+            data=json.dumps(valid_data),
+            content_type='application/json'
+        )
+        response_data = response.json()
+        response_changed = user_client.get(
+            url,
+            content_type='application/json'
+        )
+        response_data_changed = response_changed.json()
+
+        assert response.status_code == code_expected, (
+            f'Проверьте, что при PUT запросе на `{url}` с валидными '
+            f'данными, возвращается статус {code_expected}'
+        )
+        for field in self.fields_create_update:
+            assert field in response_data.keys(), (
+                f'Убедитесь, что поле `{field}` присутствует в выдаче '
+                f'после успешного изменения рецепта'
+            )
+        assert re.match(image_expected, response_data['image']), (
+            f'Убедитесь, что поле `image` содержит корректные данные'
+        )
+        assert response_data['image'] == response_data_changed['image'], (
+            f'Проверьте, что поле `image` успешно изменилось'
+        )
+        for field in data_expected.items():
+            assert (field[1]
+                    == response_data[field[0]]
+                    == response_data_changed[field[0]]), (
+                f'Убедитесь, что поле `{field[0]}` содержит корректные данные '
+                f' и изменилось в базе данных'
+            )
+        assert response_data['author'] == response_data_changed['author'], (
+            f'Убедитесь, что поле `author` не изменилось, после изменения '
+            f'рецепта'
+        )
+        ingredients_tags_expected = {
+            'ingredients': ingredients_expected,
+            'tags': tags_expected
+        }
+        for checked, expected in ingredients_tags_expected.items():
+            for i in range(len(expected)):
+                for field in expected[i].items():
+                    assert field[0] in response_data[checked][i].keys(), (
+                        f'Убедитесь, что поле `{field[0]}` присутствует '
+                        f'в поле `{checked}` после успешного изменения '
+                        f'рецепта'
+                    )
+                    assert field[1] == response_data[checked][i][field[0]], (
+                        f'Убедитесь, что значение поля `{field[0]}` в поле '
+                        f'`{checked}` содержит корректные данные'
+                    )
 
     @pytest.mark.django_db(transaction=True)
     def test_recipes_update_delete__owner(self, user_client, recipe_2):
