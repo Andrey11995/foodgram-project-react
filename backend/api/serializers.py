@@ -14,35 +14,51 @@ from users.serializers import UserSerializer
 class Base64ImageField(serializers.ImageField):
 
     def to_internal_value(self, data):
-        try:
-            decoded_file = base64.b64decode(data)
-        except TypeError:
-            self.fail('invalid_image')
-        name = str(uuid.uuid4())[:10]
-        extension = imghdr.what(name, decoded_file)
-        extension = 'jpg' if extension == 'jpeg' else extension
-        file_name = f'{name}.{extension}'
-        data = ContentFile(decoded_file, name=file_name)
+        if isinstance(data, str) and data.startswith('data:image'):
+            formatt, imgstr = data.split(';base64,')
+            ext = formatt.split('/')[-1]
+            idd = uuid.uuid4()
+            data = ContentFile(base64.b64decode(imgstr), name=idd.urn[9:] + '.' + ext)
         return super(Base64ImageField, self).to_internal_value(data)
+
+    # def to_internal_value(self, data):
+    #     try:
+    #         decoded_file = base64.b64decode(data)
+    #     except TypeError:
+    #         self.fail('invalid_image')
+    #     name = str(uuid.uuid4())[:10]
+    #     extension = imghdr.what(name, decoded_file)
+    #     extension = 'jpg' if extension == 'jpeg' else extension
+    #     file_name = f'{name}.{extension}'
+    #     data = ContentFile(decoded_file, name=file_name)
+    #     return super(Base64ImageField, self).to_internal_value(data)
 
 
 class TagListField(serializers.RelatedField):
 
-    def to_representation(self, value):
+    def to_representation(self, obj):
         return {
-            'id': value.id,
-            'name': value.name,
-            'color': value.color,
-            'slug': value.slug
+            'id': obj.id,
+            'name': obj.name,
+            'color': obj.color,
+            'slug': obj.slug
         }
 
     def to_internal_value(self, data):
         try:
-            return Tag.objects.get(pk=data)
+            return Tag.objects.get(id=data)
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
                 'Недопустимый первичный ключ "404" - объект не существует.'
             )
+
+
+class TagsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = '__all__'
+        read_only_fields = ('name', 'color', 'slug')
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
@@ -72,14 +88,6 @@ class IngredientsAmountSerializer(serializers.ModelSerializer):
 
     def get_measurement_unit(self, amount):
         return self._get_ingredient(amount.ingredient.id).measurement_unit
-
-
-class TagsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Tag
-        fields = '__all__'
-        read_only_fields = ('name', 'color', 'slug')
 
 
 class RecipesSerializer(serializers.ModelSerializer):

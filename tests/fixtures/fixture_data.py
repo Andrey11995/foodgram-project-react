@@ -7,14 +7,14 @@ from recipes.models import Amount, Ingredient, Recipe, Tag
 @pytest.fixture
 def ingredient():
     return Ingredient.objects.create(
-        name='Ингредиент', measurement_unit='кг'
+        name='Ингредиент', measurement_unit='г'
     )
 
 
 @pytest.fixture
 def ingredient_2():
     return Ingredient.objects.create(
-        name='Ингредиент 2', measurement_unit='л'
+        name='Ингредиент 2', measurement_unit='мл'
     )
 
 
