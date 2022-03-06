@@ -760,12 +760,17 @@ class TestFavoritesAndShoppingCart:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_favorites_shop_cart_create__auth_user(self, user_client, recipe):
+    def test_favorites_shop_cart_create__auth_user(self, user_client, user,
+                                                   recipe, recipe_2):
         urls = {
             f'/api/recipes/{str(recipe.id)}/favorite/':
-                (Favorite.objects, 'favorite', 'is_favorited'),
+                (Favorite.objects, 'favorite', 'is_favorited',
+                 Recipe.objects.filter(favorites__user=user),
+                 Recipe.objects.exclude(favorites__user=user)),
             f'/api/recipes/{str(recipe.id)}/shopping_cart/':
-                (ShoppingCart.objects, 'shopping_cart', 'is_in_shopping_cart')
+                (ShoppingCart.objects, 'shopping_cart', 'is_in_shopping_cart',
+                 Recipe.objects.filter(shopping_cart__user=user),
+                 Recipe.objects.exclude(shopping_cart__user=user))
         }
         code_expected = 201
         for url, obj in urls.items():
@@ -778,12 +783,17 @@ class TestFavoritesAndShoppingCart:
                 f'/api/recipes/{str(recipe.id)}/',
                 content_type='application/json'
             )
+            response_filter = user_client.get(
+                f'/api/recipes/?{obj[2]}=1',
+                content_type='application/json'
+            )
             response_double = user_client.post(
                 url,
                 content_type='application/json'
             )
             response_data = response.json()
             response_data_check = response_check.json()
+            response_data_filter = response_filter.json()
             response_data_double = response_double.json()
             image_expected = '/media/' + r'\w'
             data_expected = {
@@ -809,6 +819,20 @@ class TestFavoritesAndShoppingCart:
             assert response_data_check[obj[2]] is True, (
                 f'Убедитесь, что после добавления рецепта в список, поле '
                 f'рецепта `{obj[2]}` имеет значение `True`'
+            )
+            assert len(response_data_filter['results']) == obj[3].count(), (
+                f'Проверьте, что при GET запросе с фильтрацией на '
+                f'`/api/recipes/?{obj[2]}=1`, возвращаются все рецепты '
+                f'со значением поля `{obj[2]}` - True'
+            )
+            assert len(response_data_filter['results']) == obj[4].count(), (
+                f'Проверьте, что при GET запросе с фильтрацией на '
+                f'`/api/recipes/?{obj[2]}=0`, возвращаются все рецепты '
+                f'со значением поля `{obj[2]}` - False'
+            )
+            assert response_data_filter['results'][0][obj[2]] is True, (
+                f'Убедитесь, что при GET запросе с фильтрацией на '
+                f'`/api/recipes/?{obj[2]}=1`, значение поля `{obj[2]}` - True'
             )
             assert 'image' in response_data.keys(), (
                 f'Убедитесь, что поле `image` присутствует в выдаче'

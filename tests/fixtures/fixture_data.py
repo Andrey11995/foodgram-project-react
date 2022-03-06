@@ -19,6 +19,13 @@ def ingredient_2():
 
 
 @pytest.fixture
+def ingredient_3():
+    return Ingredient.objects.create(
+        name='Тестовый ингредиент', measurement_unit='г'
+    )
+
+
+@pytest.fixture
 def amount(ingredient):
     return Amount.objects.create(amount=2.5, ingredient=ingredient)
 

@@ -13,7 +13,7 @@ from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .filters import IngredientsFilter
+from .filters import IngredientsFilter, RecipeFilter
 from .permissions import IsAuthOwnerOrReadOnly
 from .serializers import (IngredientsSerializer, RecipesCreateSerializer,
                           RecipesSerializer, TagsSerializer)
@@ -50,6 +50,8 @@ class TagsViewSet(RetrieveListViewSet):
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthOwnerOrReadOnly]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update':

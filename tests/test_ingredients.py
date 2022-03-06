@@ -8,13 +8,24 @@ class TestIngredients:
 
     @pytest.mark.django_db(transaction=True)
     def test_ingredients_list(self, client, user_client, ingredient,
-                              ingredient_2):
+                              ingredient_2, ingredient_3):
         code_expected = 200
-        response = client.get(self.url)
-        response_auth = user_client.get(self.url)
+        response = client.get(self.url, content_type='application/json')
+        response_auth = user_client.get(
+            self.url,
+            content_type='application/json'
+        )
         response_data = response.json()
         response_data_auth = response_auth.json()
         test_ingredient = response_data[0]
+
+        response_filter = client.get(
+            f'{self.url}?name=Тест',
+            content_type='application/json'
+        )
+        response_data_filter = response_filter.json()
+        print(response_data_filter)
+
         data_expected = {
             'id': ingredient.id,
             'name': ingredient.name,
@@ -33,6 +44,17 @@ class TestIngredients:
         assert len(response_data) == Ingredient.objects.count(), (
             f'Проверьте, что при GET запросе на `{self.url}` '
             f'возвращается весь список ингредиентов'
+        )
+        assert len(response_data_filter) == Ingredient.objects.filter(
+            name__istartswith='Тест'
+        ).count(), (
+            f'Проверьте, что при GET запросе с фильтрацией на '
+            f'`{self.url}/?name=Тест` возвращается правильное количество '
+            f'ингредиентов'
+        )
+        assert response_data_filter[0]['name'] == 'Тестовый ингредиент', (
+            f'Убедитесь, что при GET запросе на `{self.url}/?name=Тест`, '
+            f'отображаются нужные ингредиенты'
         )
         for field in data_expected.items():
             assert field[0] in test_ingredient.keys(), (
