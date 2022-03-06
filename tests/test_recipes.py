@@ -342,7 +342,7 @@ class TestRecipes:
                 f'с невалидными данными выдает соответствующую ошибку'
             )
 
-    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
+    #@pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
     @pytest.mark.django_db(transaction=True)
     def test_recipes_create__valid_request_data(self, user_client, user, tag,
                                                 tag_2, image, ingredient,

@@ -1,0 +1,17 @@
+import json
+
+from django.core.management import BaseCommand
+from recipes.models import Ingredient
+
+
+class Command(BaseCommand):
+    help = 'Загрузка данных в БД'
+
+    def handle(self, *args, **options):
+        with open('../data/ingredients.json', encoding='utf-8') as data:
+            for row in json.load(data):
+                ingredient = Ingredient(
+                    name=row['name'].lower(),
+                    measurement_unit=row['measurement_unit']
+                )
+                ingredient.save()
