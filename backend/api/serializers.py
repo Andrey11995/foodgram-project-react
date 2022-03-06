@@ -1,4 +1,5 @@
 import base64
+import imghdr
 import six
 import uuid
 
@@ -28,9 +29,8 @@ class Base64ImageField(serializers.ImageField):
         return super(Base64ImageField, self).to_internal_value(data)
 
     def get_file_extension(self, file_name, decoded_file):
-        import imghdr
         extension = imghdr.what(file_name, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
+        extension = 'jpg' if extension == 'jpeg' else extension
         return extension
 
     # def to_internal_value(self, data):

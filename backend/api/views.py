@@ -54,7 +54,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update':
+        if self.action == 'create' or self.action == 'partial_update':
             return RecipesCreateSerializer
         return RecipesSerializer
 

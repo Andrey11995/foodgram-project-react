@@ -587,7 +587,7 @@ class TestRecipes:
             f'рецепт не удаляется'
         )
 
-    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
+    #@pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
     @pytest.mark.django_db(transaction=True)
     def test_recipes_update__valid_request_data(self, user_client, user, tag,
                                                 tag_2, image, ingredient,
@@ -650,7 +650,7 @@ class TestRecipes:
             'text': 'Измененное описание рецепта',
             'cooking_time': 30
         }
-        response = user_client.put(
+        response = user_client.patch(
             url,
             data=json.dumps(valid_data),
             content_type='application/json'
