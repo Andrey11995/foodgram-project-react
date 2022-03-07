@@ -15,7 +15,7 @@ from users.serializers import UserSerializer
 class Base64ImageField(serializers.ImageField):
 
     def to_representation(self, value):
-        return value
+        return value.url
 
     def to_internal_value(self, data):
         if isinstance(data, six.string_types):
