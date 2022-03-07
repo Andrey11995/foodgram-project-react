@@ -417,6 +417,7 @@ class TestRecipes:
             content_type='application/json'
         )
         response_data = response.json()
+        print(response_data)
 
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
