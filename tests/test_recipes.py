@@ -730,10 +730,10 @@ class TestRecipes:
         )
         response_data = response.json()
         tag_expected = {
-            'id': 2,
-            'name': 'Тестовый тег 2',
-            'color': '#0000FF',
-            'slug': 'test_tag_2'
+            'id': tag_2.id,
+            'name': tag_2.name,
+            'color': tag_2.color,
+            'slug': tag_2.slug
         }
 
         assert response.status_code == code_expected, (
