@@ -11,7 +11,7 @@ class Command(BaseCommand):
         with open('../data/ingredients.json', encoding='utf-8') as data:
             for row in json.load(data):
                 ingredient = Ingredient(
-                    name=row['name'].lower(),
+                    name=row['name'].capitalize(),
                     measurement_unit=row['measurement_unit']
                 )
                 ingredient.save()
