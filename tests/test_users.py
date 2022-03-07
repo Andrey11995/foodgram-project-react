@@ -162,11 +162,11 @@ class TestUsers:
             )
 
     @pytest.mark.django_db(transaction=True)
-    def test_users_create__valid_request_data(self, client, user):
+    def test_users_create__valid_request_data(self, client):
         users_count = User.objects.count()
         code_expected = 201
         valid_data = {
-            'email': 'Valid@Email.ru',
+            'email': 'Valid@email.ru',
             'username': 'ValidUsername',
             'first_name': 'Validname',
             'last_name': 'Validlastname',
@@ -175,16 +175,25 @@ class TestUsers:
         response = client.post(self.url, data=valid_data)
         response_data = response.json()
         data_expected = {
-            'email': 'Valid@Email.ru',
+            'email': 'Valid@email.ru',
             'id': response_data['id'],
             'username': 'ValidUsername',
             'first_name': 'Validname',
             'last_name': 'Validlastname'
         }
+        valid_data = {
+            'email': 'Valid@email.ru',
+            'password': 'Password654321'
+        }
+        response_auth = client.post('/api/auth/token/login/', data=valid_data)
 
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
             f'данными, возвращается статус {code_expected}'
+        )
+        assert response_auth.status_code == 200, (
+            f'Убедитесь, что после создания пользователя можно '
+            f'авторизоваться, и возвращается статус 200'
         )
         assert User.objects.count() == users_count + 1, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
