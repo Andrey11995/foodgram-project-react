@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with open(
-                'foodgram-project-react/data/ingredients.json',
+                'app/data/ingredients.json',
                 encoding='utf-8'
         ) as data:
             for row in json.load(data):
