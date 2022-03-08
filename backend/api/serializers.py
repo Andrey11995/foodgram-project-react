@@ -14,8 +14,8 @@ from users.serializers import UserSerializer
 
 class Base64ImageField(serializers.ImageField):
 
-    def to_representation(self, value):
-        return value.url
+    # def to_representation(self, value):
+    #     return value.url
 
     def to_internal_value(self, data):
         if isinstance(data, six.string_types):
@@ -95,7 +95,6 @@ class RecipesSerializer(serializers.ModelSerializer):
     tags = TagsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
-    image = Base64ImageField(use_url=False)
 
     class Meta:
         model = Recipe
@@ -126,7 +125,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     ingredients = IngredientsAmountSerializer(many=True)
     tags = TagListField(queryset=Tag.objects.all(), many=True)
-    image = Base64ImageField(use_url=False)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
