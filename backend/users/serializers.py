@@ -27,10 +27,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        style={"input_type": "password"},
+        style={'input_type': 'password'},
         label='Пароль',
         write_only=True
     )
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
 
     def validate_username(self, username):
         if username == 'me':

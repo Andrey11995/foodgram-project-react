@@ -280,7 +280,6 @@ class TestRecipes:
             f'без данных, рецепт не изменяется'
         )
 
-    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
     @pytest.mark.django_db(transaction=True)
     def test_recipes_create__invalid_request_data(self, user_client):
         recipes_count = Recipe.objects.count()
@@ -342,7 +341,6 @@ class TestRecipes:
                 f'с невалидными данными выдает соответствующую ошибку'
             )
 
-    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
     @pytest.mark.django_db(transaction=True)
     def test_recipes_create__valid_request_data(self, user_client, user, tag,
                                                 tag_2, image, ingredient,
@@ -420,6 +418,7 @@ class TestRecipes:
             content_type='application/json'
         )
         response_data = response.json()
+        print(response_data)
 
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
@@ -587,7 +586,6 @@ class TestRecipes:
             f'рецепт не удаляется'
         )
 
-    @pytest.mark.skip(reason='Json не принимает тестовое значение поля image')
     @pytest.mark.django_db(transaction=True)
     def test_recipes_update__valid_request_data(self, user_client, user, tag,
                                                 tag_2, image, ingredient,
@@ -650,7 +648,7 @@ class TestRecipes:
             'text': 'Измененное описание рецепта',
             'cooking_time': 30
         }
-        response = user_client.put(
+        response = user_client.patch(
             url,
             data=json.dumps(valid_data),
             content_type='application/json'
@@ -723,6 +721,36 @@ class TestRecipes:
         assert Recipe.objects.count() == recipes_count - 1, (
             f'Проверьте, что при DELETE запросе на `{url}` '
             f'на свой существующий рецепт, он удаляется'
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_tag_filter(self, user_client, recipe, recipe_2, tag_2):
+        code_expected = 200
+        response = user_client.get(
+            f'{self.url}?tags=test_tag_2',
+            content_type='application/json'
+        )
+        response_data = response.json()
+        tag_expected = {
+            'id': tag_2.id,
+            'name': tag_2.name,
+            'color': tag_2.color,
+            'slug': tag_2.slug
+        }
+
+        assert response.status_code == code_expected, (
+            f'Убедитесь, что при GET запросе на `{self.url}?tags=test_tag_2` '
+            f'с фильтром тегов, возвращается код {code_expected}'
+        )
+        assert len(response_data['results']) == Recipe.objects.filter(tags=tag_2).count(), (
+            f'Проверьте, что при GET запросе на `{self.url}?tags=test_tag_2` '
+            f'с фильтром тегов, возвращается количество рецептов, подходящее '
+            f'под заданный фильтр'
+        )
+        assert tag_expected in response_data['results'][0]['tags'], (
+            f'Убедитесь, что при GET запросе на `{self.url}?tags=test_tag_2`, '
+            f'в рецептах в результатах запроса присутствует тег, указанный '
+            f'в фильтре'
         )
 
 
@@ -968,3 +996,52 @@ class TestFavoritesAndShoppingCart:
             f'пользователя, возвращается сообщение: '
             f'{data_expected["detail"]}'
         )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_recipes_favorite_shop_cart_filters(self, user_client, user,
+                                                recipe, recipe_2):
+        urls = {
+            '/api/recipes/?is_favorited=1': [
+                f'/api/recipes/{str(recipe_2.id)}/favorite/',
+                'is_favorited'
+            ],
+            '/api/recipes/?is_in_shopping_cart=1': [
+                f'/api/recipes/{str(recipe_2.id)}/shopping_cart/',
+                'is_in_shopping_cart'
+            ]
+        }
+        code_expected = 200
+        for url, obj in urls.items():
+            user_client.post(
+                obj[0],
+                content_type='application/json'
+            )
+            response = user_client.get(url, content_type='application/json')
+            response_data = response.json()
+
+            assert response.status_code == code_expected, (
+                f'Убедитесь, что при GET запросе на `{url}` с фильтром, '
+                f'возвращается код {code_expected}'
+            )
+            assert response_data['results'][0][obj[1]] is True, (
+                f'Убедитесь, что при GET запросе на `{url}` с фильтром, '
+                f'в рецептах в результатах запроса значение поля '
+                f'`{obj[1]}` - True'
+            )
+            if obj[1] == 'is_favorited':
+                assert len(response_data['results']) == Recipe.objects.filter(
+                    favorites__user=user
+                ).count(), (
+                    f'Проверьте, что при GET запросе на '
+                    f'`/api/recipes/?is_favorited=1` с фильтром, возвращается '
+                    f'количество рецептов, подходящее под заданный фильтр'
+                )
+            else:
+                assert len(response_data['results']) == Recipe.objects.filter(
+                    shopping_cart__user=user
+                ).count(), (
+                    f'Проверьте, что при GET запросе на '
+                    f'`/api/recipes/?is_in_shopping_cart=1` с фильтром, '
+                    f'возвращается количество рецептов, подходящее под '
+                    f'заданный фильтр'
+                )

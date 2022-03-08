@@ -1,6 +1,8 @@
 import base64
+import imghdr
 import uuid
 
+import six
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
@@ -12,14 +14,22 @@ from users.serializers import UserSerializer
 
 class Base64ImageField(serializers.ImageField):
 
+    def to_representation(self, value):
+        return value.url
+
     def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            img_format, img_str = data.split(';base64,')
-            ext = img_format.split('/')[-1]
-            data = ContentFile(
-                base64.b64decode(img_str),
-                name=f'{uuid.uuid4().urn[9:]}.{ext}'
-            )
+        if isinstance(data, six.string_types):
+            if 'data:' in data and ';base64,' in data:
+                header, data = data.split(';base64,')
+            try:
+                decoded_file = base64.b64decode(data)
+            except TypeError:
+                self.fail('Загрузите корректное изображение')
+            file_name = str(uuid.uuid4())[:12]
+            extension = imghdr.what(file_name, decoded_file)
+            extension = 'jpg' if extension == 'jpeg' else extension
+            complete_file_name = f'{file_name}.{extension}'
+            data = ContentFile(decoded_file, name=complete_file_name)
         return super(Base64ImageField, self).to_internal_value(data)
 
 
@@ -85,6 +95,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     tags = TagsSerializer(many=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -150,7 +161,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         instance.save()
         amounts = []
         for ingredient in ingredients:
-            amount = get_object_or_404(Amount, **ingredient)
+            amount, status = Amount.objects.get_or_create(**ingredient)
             amounts.append(amount)
         instance.ingredients.set(amounts)
         instance.tags.set(tags)
