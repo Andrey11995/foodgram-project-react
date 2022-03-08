@@ -7,6 +7,10 @@
 ## Проект доступен на сервере:
 ### http://foodgram-project.sytes.net/api/docs/
 
+## Админ:
+#### Email: AdminSuper@user.ru
+#### Пароль: AdminPassword195
+
 ## Наполнение env-файла:
 
 - DB_ENGINE=django.db.backends.postgresql - используемая БД

@@ -3,19 +3,42 @@ from django.contrib import admin
 from .models import Amount, Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 
+@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-                    'is_in_shopping_cart', 'name', 'image', 'text',
-                    'cooking_time')
-    list_editable = ('tags', 'ingredients')
-    search_fields = ('author', 'name', 'tags')
-    list_filter = ('author', 'name', 'tags')
-    empty_value_display = '-пусто-'
+    fieldsets = (
+        ('Избранное', {
+            'classes': ('collapse',),
+            'fields': ['favorites_count'],
+        }),
+        (None, {
+            'fields': ['name', 'text', 'cooking_time', 'image', 'ingredients',
+                       'tags']
+        }),
+        ('Изменить автора', {
+            'classes': ('collapse',),
+            'fields': ['author'],
+        }),
+    )
+    readonly_fields = ('favorites_count',)
+    list_display = ('id', 'name', 'author')
+    list_display_links = ('id', 'name')
+    search_fields = ('name', 'author__username')
+    list_filter = ('tags', 'author')
+
+    def favorites_count(self, instance):
+        return Favorite.objects.filter(recipe=instance).count()
+
+    favorites_count.short_description = 'Добавлен в избранное'
+
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'measurement_unit')
+    list_display_links = ('id', 'name')
+    search_fields = ('name__istartswith',)
 
 
 admin.site.register(Amount)
-admin.site.register(Ingredient)
 admin.site.register(Favorite)
-admin.site.register(Recipe)
 admin.site.register(ShoppingCart)
 admin.site.register(Tag)
