@@ -37,9 +37,8 @@ class TestRecipes:
         response_data_detail = response_detail.json()
         response_data_detail_auth = response_detail_auth.json()
         test_recipe = response_data[0]
-        print(response_data)
 
-        image_expected = 'http://testserver/media/' + r'\w'
+        image_expected = '/media/' + r'\w'
         tags_expected = [
             {
                 'id': tag.id,
@@ -404,7 +403,7 @@ class TestRecipes:
                 'amount': amount_2
             }
         ]
-        image_expected = 'http://testserver/media/recipes/' + r'\w'
+        image_expected = '/media/recipes/' + r'\w'
         data_expected = {
             'is_favorited': False,
             'is_in_shopping_cart': False,
@@ -418,7 +417,6 @@ class TestRecipes:
             content_type='application/json'
         )
         response_data = response.json()
-        print(response_data)
 
         assert response.status_code == code_expected, (
             f'Проверьте, что при POST запросе на `{self.url}` с валидными '
@@ -640,7 +638,7 @@ class TestRecipes:
                 'amount': amount_2.amount
             }
         ]
-        image_expected = 'http://testserver/media/' + r'\w'
+        image_expected = '/media/' + r'\w'
         data_expected = {
             'is_favorited': False,
             'is_in_shopping_cart': False,

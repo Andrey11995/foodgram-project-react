@@ -8,23 +8,23 @@ services:
     env_file:
       - ./.env
 
-  backend:
-    image: andrey11995/foodgram-project:latest
-    restart: always
-    volumes:
-      - static_value:/app/static/
-      - media_value:/app/media/
-    depends_on:
-      - db
-    env_file:
-      - ./.env
-
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+
+  backend:
+    image: andrey11995/foodgram-project:latest
+    restart: always
+    volumes:
+      - static_value:/app/staticfiles/
+      - media_value:/app/media/
+    depends_on:
+      - db
+    env_file:
+      - ./.env
 
   nginx:
     image: nginx:1.19.3
@@ -34,10 +34,12 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+      - static_value:/app/staticfiles/
+      - media_value:/app/media/
     depends_on:
       - backend
+      - frontend
 
-volumes: 
+volumes:
   static_value:
   media_value:
-  
