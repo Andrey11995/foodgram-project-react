@@ -8,7 +8,10 @@ class Command(BaseCommand):
     help = 'Загрузка данных в БД'
 
     def handle(self, *args, **options):
-        with open('../data/ingredients.json', encoding='utf-8') as data:
+        with open(
+                'foodgram-project-react/data/ingredients.json',
+                encoding='utf-8'
+        ) as data:
             for row in json.load(data):
                 ingredient = Ingredient(
                     name=row['name'].capitalize(),
