@@ -37,6 +37,7 @@ class TestRecipes:
         response_data_detail = response_detail.json()
         response_data_detail_auth = response_detail_auth.json()
         test_recipe = response_data[0]
+        print(response_data)
 
         image_expected = 'http://testserver/media/' + r'\w'
         tags_expected = [
