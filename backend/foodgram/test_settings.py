@@ -1,4 +1,4 @@
-"""Test settings for Foodgram project."""
+"""Настройки для запуска тестов с БД SQLite."""
 
 import os
 from pathlib import Path
