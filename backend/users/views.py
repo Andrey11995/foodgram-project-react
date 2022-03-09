@@ -23,16 +23,18 @@ class UserViewSet(CreateRetrieveListViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthOrCreateList]
 
+    serializer_classes = {
+        'create': UserCreateSerializer,
+        'me': UserSerializer,
+        'set_password': SetPasswordSerializer,
+        'subscriptions': SubscribeSerializer
+    }
+
     def get_serializer_class(self):
-        if self.action == 'create':
-            return UserCreateSerializer
-        elif self.action == 'me':
-            return UserSerializer
-        elif self.action == 'set_password':
-            return SetPasswordSerializer
-        elif self.action == 'subscriptions':
-            return SubscribeSerializer
-        return self.serializer_class
+        try:
+            return self.serializer_classes[self.action]
+        except KeyError:
+            return self.serializer_class
 
     @action(
         detail=False,

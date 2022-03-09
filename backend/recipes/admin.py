@@ -35,7 +35,7 @@ class RecipeAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'measurement_unit')
     list_display_links = ('id', 'name')
-    search_fields = ('name__istartswith',)
+    search_fields = ('name__icontains',)
 
 
 admin.site.register(Amount)

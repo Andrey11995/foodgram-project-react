@@ -309,7 +309,8 @@ class TestRecipes:
         ingredients_expected = [
             {
                 'id': id_expected,
-                'amount': ['Убедитесь, что это значение больше либо равно 1.']
+                'amount': ['Убедитесь, что это значение больше либо '
+                           'равно 0.01.']
             }
         ]
         data_expected = {
@@ -346,7 +347,7 @@ class TestRecipes:
                                                 ingredient_2):
         recipes_count = Recipe.objects.count()
         code_expected = 201
-        amount_1 = 2.5
+        amount_1 = 0.1
         amount_2 = 10
         valid_ingredients_data = [
             {

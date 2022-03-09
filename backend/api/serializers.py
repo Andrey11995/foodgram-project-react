@@ -1,36 +1,11 @@
-import base64
-import imghdr
-import uuid
-
-import six
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from recipes.models import (Amount, Favorite, Ingredient, Recipe, ShoppingCart,
                             Tag)
+from recipes.serializers import Base64ImageField
 from rest_framework import serializers
 from users.serializers import UserSerializer
-
-
-class Base64ImageField(serializers.ImageField):
-
-    def to_representation(self, value):
-        return value.url
-
-    def to_internal_value(self, data):
-        if isinstance(data, six.string_types):
-            if 'data:' in data and ';base64,' in data:
-                header, data = data.split(';base64,')
-            try:
-                decoded_file = base64.b64decode(data)
-            except TypeError:
-                self.fail('Загрузите корректное изображение')
-            file_name = str(uuid.uuid4())[:12]
-            extension = imghdr.what(file_name, decoded_file)
-            extension = 'jpg' if extension == 'jpeg' else extension
-            complete_file_name = f'{file_name}.{extension}'
-            data = ContentFile(decoded_file, name=complete_file_name)
-        return super(Base64ImageField, self).to_internal_value(data)
 
 
 class TagListField(serializers.RelatedField):
@@ -135,11 +110,11 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
                   'cooking_time')
         read_only_fields = ('is_favorited', 'is_in_shopping_cart')
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        image = validated_data.pop('image')
-        recipe = Recipe.objects.create(**validated_data, image=image)
+        recipe = Recipe.objects.create(**validated_data)
         amounts = []
         for ingredient in ingredients:
             amount, status = Amount.objects.get_or_create(**ingredient)
@@ -148,6 +123,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')

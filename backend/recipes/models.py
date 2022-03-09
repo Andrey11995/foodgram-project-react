@@ -22,7 +22,7 @@ class Ingredient(models.Model):
 class Amount(models.Model):
     amount = models.FloatField(
         'Количество',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(0.01)]
     )
     ingredient = models.ForeignKey(
         Ingredient,
@@ -93,7 +93,7 @@ class Recipe(models.Model):
         upload_to='recipes/'
     )
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         verbose_name='Время приготовления'
     )
@@ -129,6 +129,12 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_fav_user_recipe'
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe.name} - {self.user.username}'
@@ -151,6 +157,12 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Список покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_sc_user_recipe'
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe.name} - {self.user.username}'

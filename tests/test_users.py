@@ -446,7 +446,7 @@ class TestSubscriptions:
             subscribing__user=user
         ).count()
         recipes_count = another_user.recipes.count()
-        image_expected = 'http://testserver/media/' + r'\w'
+        image_expected = '/media/' + r'\w'
         data_expected = {
             'email': another_user.email,
             'id': another_user.id,
@@ -591,7 +591,7 @@ class TestSubscriptions:
         recipes_count_expected = Recipe.objects.filter(
             author=another_user
         ).count()
-        image_expected = 'http://testserver/media/' + r'\w'
+        image_expected = '/media/' + r'\w'
         data_expected = {
             'email': another_user.email,
             'id': another_user.id,
