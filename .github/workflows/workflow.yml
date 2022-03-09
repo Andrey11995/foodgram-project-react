@@ -60,7 +60,7 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
             sudo docker-compose stop
-            sudo docker-compose rm backend
+            sudo docker-compose rm -f backend
             sudo docker rmi andrey11995/foodgram-project
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
