@@ -7,7 +7,7 @@
 ![Image](https://github.com/Andrey11995/foodgram-project-react/raw/master/backend/static/foodgram.jpg)
 
 ## Проект доступен на сервере:
-### http://foodgram-project.sytes.net/api/docs/
+### http://foodgram-project.sytes.net/
 
 ## Наполнение env-файла:
 
