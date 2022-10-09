@@ -2,7 +2,9 @@
 ![push](https://github.com/Andrey11995/foodgram-project-react/actions/workflows/workflow.yml/badge.svg?event=push)
 ## Описание:
 
-#### Проект Foodgram представляет собой одностраничное приложение на фреймворке React и API для него на Django REST Framework. На этом сервисе пользователи могут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
+### Проект Foodgram представляет собой одностраничное приложение на фреймворке React и API для него на Django REST Framework. На этом сервисе пользователи могут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
+
+### В workflow включено тестирование проекта через pytest и проверка кода на соответствие PEP8, а также сборка и отправка образа бэкенда на DockerHub, и оповещение об успешном завершении пайплайна в Telegram.
 
 ![Image](https://github.com/Andrey11995/foodgram-project-react/raw/master/backend/static/foodgram.jpg)
 
@@ -59,6 +61,7 @@ docker-compose exec backend python manage.py createsuperuser
 - Django REST Framework
 - React
 - PostgreSQL, SQLite
+- Pytest
 - Docker
 - Nginx
 - Gunicorn
