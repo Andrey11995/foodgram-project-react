@@ -60,7 +60,7 @@ docker-compose exec backend python manage.py createsuperuser
 - Python 3.7
 - Django REST Framework
 - React
-- PostgreSQL, SQLite
+- PostgreSQL, SQLite (для тестов)
 - Pytest
 - Docker
 - Nginx
