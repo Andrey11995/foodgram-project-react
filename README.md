@@ -47,9 +47,9 @@ docker-compose up -d --build
 ### Создание суперпользователя:
 
 ```
-docker-compose exec web python manage.py createsuperuser
+docker-compose exec backend python manage.py createsuperuser
 ```
-Ввести имя пользователя, почту и пароль.
+Ввести почту, логин, имя, фамилию и пароль.
 
 
 ## Наполнение базы данных
@@ -60,6 +60,7 @@ docker-compose exec web python manage.py createsuperuser
 docker-compose exec backend python manage.py load_ingredients
 ```
 
+>❗️Внимание❗️ Все команды ![#ff0000](docker-compose exec) *docker-compose exec* выполняются только из директории, содержащей файл docker-compose.yml
 
 ## Технологии
 
