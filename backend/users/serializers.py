@@ -8,6 +8,7 @@ from .models import Subscription, User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор для получения пользователей."""
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -26,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания пользователей с валидацией."""
     password = serializers.CharField(
         style={'input_type': 'password'},
         label='Пароль',
@@ -88,6 +90,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор для просмотра подписок."""
     is_subscribed = serializers.SerializerMethodField()
     recipes = RecipePartialSerializer(many=True)
     recipes_count = serializers.SerializerMethodField()

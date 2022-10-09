@@ -9,7 +9,7 @@ from users.serializers import UserSerializer
 
 
 class TagListField(serializers.RelatedField):
-
+    """Поле для списка тегов (input/output)."""
     def to_representation(self, obj):
         return {
             'id': obj.id,
@@ -28,7 +28,7 @@ class TagListField(serializers.RelatedField):
 
 
 class TagsSerializer(serializers.ModelSerializer):
-
+    """Сериализатор тегов."""
     class Meta:
         model = Tag
         fields = '__all__'
@@ -36,13 +36,14 @@ class TagsSerializer(serializers.ModelSerializer):
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
-
+    """Сериализатор для получения списка ингредиентов."""
     class Meta:
         model = Ingredient
         fields = '__all__'
 
 
 class IngredientsAmountSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания ингредиентов с полем amount (количество)."""
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         source='ingredient'
@@ -65,6 +66,7 @@ class IngredientsAmountSerializer(serializers.ModelSerializer):
 
 
 class RecipesSerializer(serializers.ModelSerializer):
+    """Сериализатор для получения рецептов."""
     author = UserSerializer(read_only=True)
     ingredients = IngredientsAmountSerializer(many=True)
     tags = TagsSerializer(many=True)
@@ -98,6 +100,7 @@ class RecipesSerializer(serializers.ModelSerializer):
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и редактирования рецептов с валидацией."""
     author = UserSerializer(read_only=True)
     ingredients = IngredientsAmountSerializer(many=True)
     tags = TagListField(queryset=Tag.objects.all(), many=True)

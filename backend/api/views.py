@@ -22,16 +22,22 @@ from .serializers import (IngredientsSerializer, RecipesCreateSerializer,
 class RetrieveListViewSet(mixins.ListModelMixin,
                           mixins.RetrieveModelMixin,
                           viewsets.GenericViewSet):
+    """ViewSet с методом GET (list, retrieve)."""
     pass
 
 
 class CreateDestroyViewSet(mixins.CreateModelMixin,
                            mixins.DestroyModelMixin,
                            viewsets.GenericViewSet):
+    """ViewSet с методами POST и DELETE."""
     pass
 
 
 class IngredientsViewSet(RetrieveListViewSet):
+    """
+    Получение ингредиентов
+    Методы: GET (list, retrieve).
+    """
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     permission_classes = [permissions.AllowAny]
@@ -41,6 +47,10 @@ class IngredientsViewSet(RetrieveListViewSet):
 
 
 class TagsViewSet(RetrieveListViewSet):
+    """
+    Получение тегов
+    Методы: GET (list, retrieve).
+    """
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
     permission_classes = [permissions.AllowAny]
@@ -48,6 +58,10 @@ class TagsViewSet(RetrieveListViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet рецептов
+    Методы: GET (list, retrieve), POST, PATCH, DELETE.
+    """
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthOwnerOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
@@ -67,6 +81,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def download_shopping_cart(self, request):
+        """Метод создания и скачивания PDF-файла со списком покупок."""
         user_recipes = Recipe.objects.filter(shopping_cart__user=request.user)
         if not user_recipes:
             error = {'errors': 'Список рецептов пуст'}
@@ -90,6 +105,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return response
 
     def _get_shopping_cart(self, recipes):
+        """Метод получения списка покупок из избранных рецептов."""
         ingredients_dict = {}
         for recipe in recipes:
             ingredients = recipe.ingredients.all()
@@ -106,6 +122,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class FavoriteShoppingCartView(views.APIView):
+    """
+    Избранные рецепты (добавить/удалить)
+    Методы: POST, DELETE
+    """
     permission_classes = [permissions.IsAuthenticated]
     queryset = {
         'favorite': Favorite.objects,

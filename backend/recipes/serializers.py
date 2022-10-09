@@ -10,7 +10,7 @@ from .models import Recipe
 
 
 class Base64ImageField(serializers.ImageField):
-
+    """Поле для декодирования изображения из base64."""
     def to_representation(self, value):
         return value.url
 
@@ -31,6 +31,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class RecipePartialSerializer(serializers.ModelSerializer):
+    """Сериализатор для получения рецептов в подписчиках."""
     image = Base64ImageField()
 
     class Meta:

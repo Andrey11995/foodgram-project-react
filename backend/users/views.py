@@ -15,10 +15,15 @@ class CreateRetrieveListViewSet(mixins.CreateModelMixin,
                                 mixins.ListModelMixin,
                                 mixins.RetrieveModelMixin,
                                 viewsets.GenericViewSet):
+    """ViewSet с методами GET (list, retrieve) и POST."""
     pass
 
 
 class UserViewSet(CreateRetrieveListViewSet):
+    """
+    Создание и получение пользователей
+    Методы: GET (list, retrieve), POST.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthOrCreateList]
@@ -42,6 +47,7 @@ class UserViewSet(CreateRetrieveListViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def me(self, request):
+        """Метод получения профиля текущего пользователя."""
         serializer = self.get_serializer(request.user)
         return Response(
             serializer.data,
@@ -54,6 +60,7 @@ class UserViewSet(CreateRetrieveListViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def set_password(self, request, *args, **kwargs):
+        """Метод изменения пароля текущего пользователя."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.request.user.set_password(
@@ -68,6 +75,7 @@ class UserViewSet(CreateRetrieveListViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def subscriptions(self, request, *args, **kwargs):
+        """Метод получения подписок текущего пользователя."""
         subscribe_users = User.objects.filter(subscribing__user=request.user)
         serializer = self.get_serializer(subscribe_users, many=True)
         page = self.paginate_queryset(serializer.data)
@@ -75,6 +83,10 @@ class UserViewSet(CreateRetrieveListViewSet):
 
 
 class SubscriptionView(views.APIView):
+    """
+    Подписки (подписаться/отписаться)
+    Методы: POST, DELETE
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):

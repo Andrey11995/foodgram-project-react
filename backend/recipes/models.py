@@ -4,6 +4,7 @@ from users.models import User
 
 
 class Ingredient(models.Model):
+    """Модель ингредиента."""
     name = models.CharField(max_length=200, verbose_name='Название')
     measurement_unit = models.CharField(
         max_length=50,
@@ -20,6 +21,7 @@ class Ingredient(models.Model):
 
 
 class Amount(models.Model):
+    """Модель количества ингредиента."""
     amount = models.FloatField(
         'Количество',
         validators=[MinValueValidator(0.01)]
@@ -40,6 +42,7 @@ class Amount(models.Model):
 
 
 class Tag(models.Model):
+    """Модель тега."""
     name = models.CharField(
         max_length=200,
         unique=True,
@@ -66,6 +69,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+    """Модель рецепта."""
     tags = models.ManyToManyField(
         Tag,
         related_name='recipes',
@@ -113,6 +117,7 @@ class Recipe(models.Model):
 
 
 class Favorite(models.Model):
+    """Модель избранного."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -141,6 +146,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
+    """Модель списка покупок."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
