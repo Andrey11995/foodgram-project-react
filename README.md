@@ -41,7 +41,7 @@ touch .env && nano .env
 ```
 docker-compose up -d --build
 ```
-Проект развернут и запущен, миграции и сборка статики автоматизированы
+Проект развернут и запущен, миграции, сборка статики и наполнение БД ингредиентами автоматизированы
 
 
 ### Создание суперпользователя:
@@ -51,24 +51,15 @@ docker-compose exec backend python manage.py createsuperuser
 ```
 Ввести почту, логин, имя, фамилию и пароль.
 
-
-## Наполнение базы данных
-
-### Для наполнения базы данных ингредиентами применить следующую команду:
-
-```
-docker-compose exec backend python manage.py load_ingredients
-```
-
->❗️Внимание❗️ Все команды ![#ff0000](docker-compose exec) *docker-compose exec* выполняются только из директории, содержащей файл docker-compose.yml
+>❗️Внимание❗️ Команда выполняется только из директории, содержащей файл docker-compose.yml
 
 ## Технологии
 
-#### Python
-#### Django REST Framework
-#### React
-#### PostgreSQL, SQLite
-#### Docker
-#### Nginx
-#### Gunicorn
-#### Github Workflow
+- Python 3.7
+- Django REST Framework
+- React
+- PostgreSQL, SQLite
+- Docker
+- Nginx
+- Gunicorn
+- Github Workflow

@@ -6,4 +6,6 @@ python manage.py migrate --noinput
 
 python manage.py collectstatic --noinput
 
+python manage.py load_ingredients
+
 gunicorn --bind 0:8000 foodgram.wsgi:application
